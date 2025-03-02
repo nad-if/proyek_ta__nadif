@@ -1,101 +1,495 @@
-import Image from "next/image";
+'use client';
+
+import { ReactNode } from 'react';
+import Link from 'next/link';
+import { 
+  FiHome, FiShoppingCart, FiUsers, FiSettings, FiBell, FiUser, FiPackage, 
+  FiAlertCircle, FiMail, FiCalendar, FiMessageSquare, FiGrid, FiShare2,
+  FiDollarSign, FiHelpCircle, FiMonitor, FiTag, FiBarChart2, FiChevronDown,
+  FiSearch, FiSun, FiMenu, FiLayers, FiClock
+} from 'react-icons/fi';
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  BarChart,
+  Bar,
+  RadialBarChart,
+  RadialBar,
+  Legend
+} from 'recharts';
+
+// Data untuk grafik
+const salesData = [
+  { name: '01 May', actual: 3200, projected: 2800 },
+  { name: '05 May', actual: 3200, projected: 2900 },
+  { name: '10 May', actual: 3500, projected: 3000 },
+  { name: '15 May', actual: 4000, projected: 3300 },
+  { name: '20 May', actual: 5800, projected: 4200 },
+  { name: '25 May', actual: 4400, projected: 4700 },
+  { name: '30 May', actual: 4100, projected: 4300 },
+];
+
+const orderBarData = [
+  { name: 'Mon', value: 35 },
+  { name: 'Tue', value: 45 },
+  { name: 'Wed', value: 30 },
+  { name: 'Thu', value: 40 },
+  { name: 'Fri', value: 35 },
+  { name: 'Sat', value: 45 },
+  { name: 'Sun', value: 38 },
+];
+
+const newCustomerData = [
+  { name: '01 May', value: 100 },
+  { name: '02 May', value: 120 },
+  { name: '03 May', value: 110 },
+  { name: '04 May', value: 130 },
+  { name: '05 May', value: 150 },
+  { name: '06 May', value: 140 },
+  { name: '07 May', value: 160 },
+];
+
+const couponData = [{ name: 'Percentage Discount', value: 72 }];
+const couponBreakdown = [
+  { name: 'Percentage discount', value: 72, color: '#7367F0' },
+  { name: 'Fixed card discount', value: 18, color: '#39B3F0' },
+  { name: 'Fixed product discount', value: 10, color: '#00CFE8' },
+];
+
+const payingData = [
+  { name: 'Paying', value: 30, color: '#7367F0' },
+  { name: 'Non-paying', value: 70, color: '#28C76F' },
+];
 
 export default function Home() {
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+    <div className="flex flex-col h-screen bg-[#0e111a]">
+      {/* Header */}
+      <header className="h-16 flex items-center justify-between px-6 border-b border-[#3B4253] bg-[#141824]">
+        {/* Logo */}
+        <div className="flex items-center">
+          <div className="w-7 h-7 rounded-md bg-[#EA5455] flex items-center justify-center mr-2">
+            <svg width="14" height="18" viewBox="0 0 14 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M7 0L14 6H10V12L4 6H8V0L7 0Z" fill="white"/>
+            </svg>
+          </div>
+          <h1 className="text-xl font-bold text-white">MONITOR</h1>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
+        
+        <div className="relative max-w-xl w-full mx-10">
+          <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#676D7D]" />
+          <input
+            type="text"
+            placeholder="Search..."
+            className="w-full bg-[#0e111a] border border-[#3B4253] rounded-full py-2 pl-10 pr-4 text-white focus:outline-none focus:ring-2 focus:ring-[#7367F0]/50"
           />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+        </div>
+        <div className="flex items-center space-x-4">
+          <button className="text-[#B4B7BD] hover:text-white p-1">
+            <FiSun className="w-5 h-5" />
+          </button>
+          <button className="text-[#B4B7BD] hover:text-white p-1">
+            <FiBell className="w-5 h-5" />
+          </button>
+          <button className="text-[#B4B7BD] hover:text-white p-1">
+            <FiMenu className="w-5 h-5" />
+          </button>
+          <div className="w-8 h-8 rounded-full bg-[#7367F0] flex items-center justify-center">
+            <img
+              src="https://randomuser.me/api/portraits/men/32.jpg"
+              alt="Profile"
+              className="rounded-full w-full h-full object-cover"
+            />
+          </div>
+        </div>
+      </header>
+      
+      <div className="flex flex-1 overflow-hidden">
+        {/* Sidebar */}
+        <aside className="w-56 bg-[#141824] flex flex-col">
+          {/* Navigation */}
+          <div className="px-4 pt-3">
+            <div className="mb-5">
+              <Link href="/" className="flex items-center text-white p-2 rounded-md bg-[#7367F0] hover:bg-[#7367F0]/90">
+                <FiHome className="mr-3" size={18} />
+                <span>Home</span>
+              </Link>
+            </div>
+
+            <div className="mb-6">
+              <p className="px-2 text-xs font-medium text-[#676D7D] uppercase mb-2">APPS</p>
+              <ul className="space-y-1">
+                <li>
+                  <Link href="#" className="flex items-center text-white p-2 rounded-md hover:bg-[#7367F0]/20">
+                    <FiShoppingCart className="mr-3" size={18} />
+                    <span>E-commerce</span>
+                  </Link>
+                </li>
+                <li>
+                  <Link href="#" className="flex items-center text-[#B4B7BD] p-2 rounded-md hover:bg-[#7367F0]/20 hover:text-white">
+                    <FiUsers className="mr-3" size={18} />
+                    <span>CRM</span>
+                  </Link>
+                </li>
+                <li>
+                  <Link href="#" className="flex items-center text-[#B4B7BD] p-2 rounded-md hover:bg-[#7367F0]/20 hover:text-white">
+                    <FiLayers className="mr-3" size={18} />
+                    <span>Project management</span>
+                  </Link>
+                </li>
+                <li>
+                  <Link href="#" className="flex items-center text-[#B4B7BD] p-2 rounded-md hover:bg-[#7367F0]/20 hover:text-white">
+                    <FiMonitor className="mr-3" size={18} />
+                    <span>Travel agency</span>
+                    <div className="ml-2 w-2 h-2 rounded-full bg-[#00CFE8]"></div>
+                  </Link>
+                </li>
+                <li>
+                  <Link href="#" className="flex items-center text-[#B4B7BD] p-2 rounded-md hover:bg-[#7367F0]/20 hover:text-white">
+                    <FiMessageSquare className="mr-3" size={18} />
+                    <span>Chat</span>
+                  </Link>
+                </li>
+                <li>
+                  <Link href="#" className="flex items-center text-[#B4B7BD] p-2 rounded-md hover:bg-[#7367F0]/20 hover:text-white">
+                    <FiMail className="mr-3" size={18} />
+                    <span>Email</span>
+                  </Link>
+                </li>
+                <li>
+                  <Link href="#" className="flex items-center text-[#B4B7BD] p-2 rounded-md hover:bg-[#7367F0]/20 hover:text-white">
+                    <FiCalendar className="mr-3" size={18} />
+                    <span>Events</span>
+                  </Link>
+                </li>
+                <li>
+                  <Link href="#" className="flex items-center text-[#B4B7BD] p-2 rounded-md hover:bg-[#7367F0]/20 hover:text-white">
+                    <FiGrid className="mr-3" size={18} />
+                    <span>Kanban</span>
+                  </Link>
+                </li>
+                <li>
+                  <Link href="#" className="flex items-center text-[#B4B7BD] p-2 rounded-md hover:bg-[#7367F0]/20 hover:text-white">
+                    <FiShare2 className="mr-3" size={18} />
+                    <span>Social</span>
+                  </Link>
+                </li>
+                <li>
+                  <Link href="#" className="flex items-center text-[#B4B7BD] p-2 rounded-md hover:bg-[#7367F0]/20 hover:text-white">
+                    <FiCalendar className="mr-3" size={18} />
+                    <span>Calendar</span>
+                  </Link>
+                </li>
+              </ul>
+            </div>
+
+            <div>
+              <p className="px-2 text-xs font-medium text-[#676D7D] uppercase mb-2">PAGES</p>
+              <ul className="space-y-1">
+                <li>
+                  <Link href="#" className="flex items-center text-[#B4B7BD] p-2 rounded-md hover:bg-[#7367F0]/20 hover:text-white">
+                    <FiMonitor className="mr-3" size={18} />
+                    <span>Starter</span>
+                  </Link>
+                </li>
+                <li>
+                  <Link href="#" className="flex items-center text-[#B4B7BD] p-2 rounded-md hover:bg-[#7367F0]/20 hover:text-white">
+                    <FiHelpCircle className="mr-3" size={18} />
+                    <span>FAQ</span>
+                  </Link>
+                </li>
+                <li>
+                  <Link href="#" className="flex items-center text-[#B4B7BD] p-2 rounded-md hover:bg-[#7367F0]/20 hover:text-white">
+                    <FiMonitor className="mr-3" size={18} />
+                    <span>Landing</span>
+                  </Link>
+                </li>
+                <li>
+                  <Link href="#" className="flex items-center text-[#B4B7BD] p-2 rounded-md hover:bg-[#7367F0]/20 hover:text-white">
+                    <FiDollarSign className="mr-3" size={18} />
+                    <span>Pricing</span>
+                  </Link>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          {/* Collapsed View Button */}
+          <div className="mt-auto p-4 border-t border-[#3B4253]">
+            <button className="flex items-center text-[#B4B7BD] hover:text-white w-full">
+              <FiMenu className="mr-3" size={18} />
+              <span>Collapsed View</span>
+            </button>
+          </div>
+        </aside>
+
+        {/* Main Content */}
+        <main className="flex-1 flex flex-col overflow-hidden">
+          {/* Page Content */}
+          <div className="flex-1 overflow-auto p-6">
+            <div className="space-y-6">
+              {/* Page Title */}
+              <div>
+                <h1 className="text-2xl font-bold text-white">Monitoring Dashboard</h1>
+                <p className="text-[#B4B7BD] mt-1">Welcome back, here's what's going on your monitoring right now</p>
+              </div>
+
+              {/* Stats Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="bg-[#0e111a] p-4 rounded-lg flex items-center border border-[#3B4253]">
+                  <div className="w-12 h-12 bg-[#28C76F]/20 rounded-full flex items-center justify-center mr-4">
+                    <FiShoppingCart className="w-6 h-6 text-[#28C76F]" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-white">57 new orders</h3>
+                    <p className="text-[#B4B7BD] text-sm">Awaiting processing</p>
+                  </div>
+                </div>
+
+                <div className="bg-[#0e111a] p-4 rounded-lg flex items-center border border-[#3B4253]">
+                  <div className="w-12 h-12 bg-[#FF9F43]/20 rounded-full flex items-center justify-center mr-4">
+                    <FiClock className="w-6 h-6 text-[#FF9F43]" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-white">5 orders</h3>
+                    <p className="text-[#B4B7BD] text-sm">On hold</p>
+                  </div>
+                </div>
+
+                <div className="bg-[#0e111a] p-4 rounded-lg flex items-center border border-[#3B4253]">
+                  <div className="w-12 h-12 bg-[#EA5455]/20 rounded-full flex items-center justify-center mr-4">
+                    <FiPackage className="w-6 h-6 text-[#EA5455]" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-white">15 products</h3>
+                    <p className="text-[#B4B7BD] text-sm">Out of stock</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Total Sells Chart */}
+              <div className="bg-[#0e111a] p-6 rounded-lg border border-[#3B4253]">
+                <div className="flex justify-between items-center mb-6">
+                  <div>
+                    <h3 className="text-lg font-semibold text-white">SDR 1</h3>
+                    <p className="text-[#B4B7BD] text-sm">Payment received across all channels</p>
+                  </div>
+                  <div className="flex items-center bg-[#0e111a] border border-[#3B4253] rounded-md">
+                    <button className="flex items-center text-white px-4 py-2">
+                      <span>Mar 1 - 31, 2023</span>
+                      <FiChevronDown className="ml-2" />
+                    </button>
+                  </div>
+                </div>
+                <div className="h-[250px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={salesData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#3A3B64" vertical={false} />
+                      <XAxis dataKey="name" stroke="#B4B7BD" axisLine={false} tickLine={false} />
+                      <YAxis stroke="#B4B7BD" axisLine={false} tickLine={false} />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: '#0e111a',
+                          border: '1px solid #3B4253',
+                          borderRadius: '4px',
+                        }}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="actual"
+                        stroke="#7367F0"
+                        strokeWidth={3}
+                        dot={false}
+                        activeDot={{ r: 6 }}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="projected"
+                        stroke="#7367F0"
+                        strokeWidth={2}
+                        strokeDasharray="5 5"
+                        dot={false}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* Main Dashboard Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Total Orders */}
+                <div className="bg-[#0e111a] p-6 rounded-lg border border-[#3B4253]">
+                  <div className="flex justify-between items-center mb-4">
+                    <div>
+                      <h3 className="text-lg font-semibold text-white">Total orders</h3>
+                      <p className="text-[#B4B7BD] text-xs">Last 7 days</p>
+                    </div>
+                    <div className="flex items-center">
+                      <span className="text-[#EA5455] text-sm bg-[#EA5455]/10 px-2 py-1 rounded">-6.8%</span>
+                    </div>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <h2 className="text-3xl font-bold text-white">16,247</h2>
+                  </div>
+                  <div className="h-[120px] my-3">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={orderBarData}>
+                        <Bar dataKey="value" fill="#7367F0" radius={[5, 5, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <div className="flex flex-col gap-2 mt-4">
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center">
+                        <div className="w-3 h-3 bg-[#7367F0] rounded-sm mr-2"></div>
+                        <span className="text-[#B4B7BD] text-sm">Completed</span>
+                      </div>
+                      <span className="text-white text-sm">52%</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center">
+                        <div className="w-3 h-3 bg-[#B4B7BD]/30 rounded-sm mr-2"></div>
+                        <span className="text-[#B4B7BD] text-sm">Pending payment</span>
+                      </div>
+                      <span className="text-white text-sm">48%</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* New Customers */}
+                <div className="bg-[#0e111a] p-6 rounded-lg border border-[#3B4253]">
+                  <div className="flex justify-between items-center mb-4">
+                    <div>
+                      <h3 className="text-lg font-semibold text-white">New customers</h3>
+                      <p className="text-[#B4B7BD] text-xs">Last 7 days</p>
+                    </div>
+                    <div className="flex items-center">
+                      <span className="text-[#28C76F] text-sm bg-[#28C76F]/10 px-2 py-1 rounded">+26.5%</span>
+                    </div>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <h2 className="text-3xl font-bold text-white">356</h2>
+                  </div>
+                  <div className="h-[150px] mt-3">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={newCustomerData}>
+                        <Line 
+                          type="monotone" 
+                          dataKey="value" 
+                          stroke="#7367F0" 
+                          strokeWidth={3} 
+                          dot={false}
+                          activeDot={{ r: 6 }}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+
+                {/* Top Coupons */}
+                <div className="bg-[#0e111a] p-6 rounded-lg border border-[#3B4253]">
+                  <div className="mb-4">
+                    <h3 className="text-lg font-semibold text-white">Top coupons</h3>
+                    <p className="text-[#B4B7BD] text-xs">Last 7 days</p>
+                  </div>
+                  <div className="h-[180px] flex justify-center items-center">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={couponData}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={60}
+                          outerRadius={80}
+                          fill="#8884d8"
+                          dataKey="value"
+                          startAngle={90}
+                          endAngle={-270}
+                        >
+                          <Cell fill="#7367F0" />
+                        </Pie>
+                        <text
+                          x="50%"
+                          y="50%"
+                          textAnchor="middle"
+                          dominantBaseline="middle"
+                          className="text-2xl font-bold"
+                          fill="#fff"
+                        >
+                          72%
+                        </text>
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <div className="space-y-2 mt-3">
+                    {couponBreakdown.map((item, index) => (
+                      <div key={index} className="flex justify-between items-center">
+                        <div className="flex items-center">
+                          <div className="w-3 h-3 rounded-sm mr-2" style={{ backgroundColor: item.color }}></div>
+                          <span className="text-[#B4B7BD] text-sm">{item.name}</span>
+                        </div>
+                        <span className="text-white text-sm">{item.value}%</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Paying vs Non-paying */}
+                <div className="bg-[#0e111a] p-6 rounded-lg border border-[#3B4253]">
+                  <div className="mb-4">
+                    <h3 className="text-lg font-semibold text-white">Paying vs non paying</h3>
+                    <p className="text-[#B4B7BD] text-xs">Last 7 days</p>
+                  </div>
+                  <div className="h-[180px] flex justify-center items-center">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <RadialBarChart 
+                        cx="50%" 
+                        cy="50%" 
+                        innerRadius="70%" 
+                        outerRadius="90%" 
+                        startAngle={180} 
+                        endAngle={0}
+                        data={[{name: 'Paying', value: 30}]}
+                      >
+                        <RadialBar
+                          background
+                          dataKey="value"
+                          cornerRadius={10}
+                          fill="#7367F0"
+                        />
+                      </RadialBarChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <div className="space-y-2 mt-3">
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center">
+                        <div className="w-3 h-3 bg-[#7367F0] rounded-sm mr-2"></div>
+                        <span className="text-[#B4B7BD] text-sm">Paying customer</span>
+                      </div>
+                      <span className="text-white text-sm">30%</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center">
+                        <div className="w-3 h-3 bg-[#B4B7BD]/30 rounded-sm mr-2"></div>
+                        <span className="text-[#B4B7BD] text-sm">Non-paying customer</span>
+                      </div>
+                      <span className="text-white text-sm">70%</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
     </div>
   );
 }
