@@ -1,12 +1,9 @@
 'use client';
 
-import { ReactNode } from 'react';
 import Link from 'next/link';
 import { 
-  FiHome, FiShoppingCart, FiUsers, FiSettings, FiBell, FiUser, FiPackage, 
-  FiAlertCircle, FiMail, FiCalendar, FiMessageSquare, FiGrid, FiShare2,
-  FiDollarSign, FiHelpCircle, FiMonitor, FiTag, FiBarChart2, FiChevronDown,
-  FiSearch, FiSun, FiMenu, FiLayers, FiClock
+  FiHome, FiSettings, FiBell, 
+  FiSearch, FiSun, FiMenu
 } from 'react-icons/fi';
 import {
   LineChart,
@@ -16,27 +13,10 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
+  ReferenceLine,
   BarChart,
-  Bar,
-  RadialBarChart,
-  RadialBar,
-  Legend,
-  ReferenceLine
+  Bar
 } from 'recharts';
-
-// Data untuk grafik
-const salesData = [
-  { name: '01 May', actual: 3200, projected: 2800 },
-  { name: '05 May', actual: 3200, projected: 2900 },
-  { name: '10 May', actual: 3500, projected: 3000 },
-  { name: '15 May', actual: 4000, projected: 3300 },
-  { name: '20 May', actual: 5800, projected: 4200 },
-  { name: '25 May', actual: 4400, projected: 4700 },
-  { name: '30 May', actual: 4100, projected: 4300 },
-];
 
 // SDR Data
 const sdrData = [
@@ -70,18 +50,6 @@ const newCustomerData = [
   { name: '05 May', value: 150 },
   { name: '06 May', value: 140 },
   { name: '07 May', value: 160 },
-];
-
-const couponData = [{ name: 'Percentage Discount', value: 72 }];
-const couponBreakdown = [
-  { name: 'Percentage discount', value: 72, color: '#7367F0' },
-  { name: 'Fixed card discount', value: 18, color: '#39B3F0' },
-  { name: 'Fixed product discount', value: 10, color: '#00CFE8' },
-];
-
-const payingData = [
-  { name: 'Paying', value: 30, color: '#7367F0' },
-  { name: 'Non-paying', value: 70, color: '#28C76F' },
 ];
 
 export default function Home() {
@@ -169,7 +137,7 @@ export default function Home() {
               {/* Page Title */}
               <div>
                 <h1 className="text-2xl font-bold text-white">Monitoring Dashboard</h1>
-                <p className="text-[#B4B7BD] mt-1">Welcome back, here's what's going on your monitoring right now</p>
+                <p className="text-[#B4B7BD] mt-1">Welcome back, here&#39;s what&#39;s going on your monitoring right now</p>
               </div>
 
               {/* Stats Cards */}

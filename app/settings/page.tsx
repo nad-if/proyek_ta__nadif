@@ -1,12 +1,9 @@
 'use client';
 
-import { ReactNode } from 'react';
 import Link from 'next/link';
 import { 
-  FiHome, FiShoppingCart, FiUsers, FiSettings, FiBell, FiUser, FiPackage, 
-  FiAlertCircle, FiMail, FiCalendar, FiMessageSquare, FiGrid, FiShare2,
-  FiDollarSign, FiHelpCircle, FiMonitor, FiTag, FiBarChart2, FiChevronDown,
-  FiSearch, FiSun, FiMenu, FiLayers, FiClock
+  FiHome, FiShoppingCart, FiSettings, FiBell, FiPackage, 
+  FiSearch, FiSun, FiMenu, FiClock, FiChevronDown
 } from 'react-icons/fi';
 import {
   LineChart,
@@ -16,14 +13,8 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
   BarChart,
-  Bar,
-  RadialBarChart,
-  RadialBar,
-  Legend
+  Bar
 } from 'recharts';
 
 // Data untuk grafik
@@ -55,18 +46,6 @@ const newCustomerData = [
   { name: '05 May', value: 150 },
   { name: '06 May', value: 140 },
   { name: '07 May', value: 160 },
-];
-
-const couponData = [{ name: 'Percentage Discount', value: 72 }];
-const couponBreakdown = [
-  { name: 'Percentage discount', value: 72, color: '#7367F0' },
-  { name: 'Fixed card discount', value: 18, color: '#39B3F0' },
-  { name: 'Fixed product discount', value: 10, color: '#00CFE8' },
-];
-
-const payingData = [
-  { name: 'Paying', value: 30, color: '#7367F0' },
-  { name: 'Non-paying', value: 70, color: '#28C76F' },
 ];
 
 export default function Settings() {
@@ -154,7 +133,7 @@ export default function Settings() {
               {/* Page Title */}
               <div>
                 <h1 className="text-2xl font-bold text-white">Monitoring Dashboard</h1>
-                <p className="text-[#B4B7BD] mt-1">Welcome back, here's what's going on your monitoring right now</p>
+                <p className="text-[#B4B7BD] mt-1">Welcome back, here&#39;s what&#39;s going on your monitoring right now</p>
               </div>
 
               {/* Stats Cards */}
