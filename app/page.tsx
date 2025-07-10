@@ -177,7 +177,7 @@ export default function Home() {
                         stroke="#B4B7BD" 
                         axisLine={false} 
                         tickLine={false}
-                        domain={[0, -100]} 
+                        domain={[-100, 0]} 
                         ticks={[0, -20, -40, -60, -80, -100]} 
                         style={{ fontSize: '10px' }}
                         tick={(props) => {
