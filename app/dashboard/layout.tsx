@@ -4,9 +4,9 @@ import { ReactNode } from 'react';
 import Link from 'next/link';
 import { FiHome, FiShoppingCart, FiUsers, FiSettings, FiBell, FiUser } from 'react-icons/fi';
 
-interface DashboardLayoutProps {
-  children: ReactNode;
-}
+type DashboardLayoutProps = {
+  children: React.ReactNode;
+};
 
 const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   return (

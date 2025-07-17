@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Sidebar from '../components/Sidebar';
 import { 
   FiHome, FiShoppingCart, FiSettings, FiBell, FiPackage, 
   FiSearch, FiSun, FiMenu, FiClock, FiChevronDown
@@ -92,38 +93,7 @@ export default function Settings() {
       </header>
       
       <div className="flex flex-1 overflow-hidden">
-        {/* Sidebar */}
-        <aside className="w-56 bg-[#141824] flex flex-col">
-          {/* Navigation */}
-          <div className="px-4 pt-3">
-            <div className="mb-5">
-              <Link href="/" className="flex items-center text-[#B4B7BD] p-2 rounded-md hover:bg-[#7367F0]/20 hover:text-white">
-                <FiHome className="mr-3" size={18} />
-                <span>Home</span>
-              </Link>
-            </div>
-            <div className="mb-5">
-              <Link href="/home2" className="flex items-center text-[#B4B7BD] p-2 rounded-md hover:bg-[#7367F0]/20 hover:text-white">
-                <FiHome className="mr-3" size={18} />
-                <span>Home 2</span>
-              </Link>
-            </div>
-            <div className="mb-5">
-              <Link href="/settings" className="flex items-center text-white p-2 rounded-md bg-[#7367F0] hover:bg-[#7367F0]/90">
-                <FiSettings className="mr-3" size={18} />
-                <span>Settings</span>
-              </Link>
-            </div>
-          </div>
-
-          {/* Collapsed View Button */}
-          <div className="mt-auto p-4 border-t border-[#3B4253]">
-            <button className="flex items-center text-[#B4B7BD] hover:text-white w-full">
-              <FiMenu className="mr-3" size={18} />
-              <span>Collapsed View</span>
-            </button>
-          </div>
-        </aside>
+        <Sidebar />
 
         {/* Main Content */}
         <main className="flex-1 flex flex-col overflow-hidden">

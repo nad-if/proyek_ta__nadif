@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Sidebar from './components/Sidebar';
 import { 
   FiHome, FiSettings, FiBell, 
   FiSearch, FiSun, FiMenu
@@ -17,6 +18,7 @@ import {
   BarChart,
   Bar
 } from 'recharts';
+import { useState, useRef, useEffect } from 'react';
 
 // SDR Data
 const sdrData = [
@@ -53,6 +55,10 @@ const newCustomerData = [
 ];
 
 export default function Home() {
+  const [selectedDevice, setSelectedDevice] = useState('');
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
   return (
     <div className="flex flex-col h-screen bg-[#0e111a]">
       {/* Header */}
@@ -85,49 +91,42 @@ export default function Home() {
           <button className="text-[#B4B7BD] hover:text-white p-1">
             <FiMenu className="w-5 h-5" />
           </button>
-          <div className="w-8 h-8 rounded-full bg-[#7367F0] flex items-center justify-center">
-            <img
-              src="https://randomuser.me/api/portraits/men/32.jpg"
-              alt="Profile"
-              className="rounded-full w-full h-full object-cover"
-            />
+          <div className="relative" ref={dropdownRef}>
+            <div
+              className="flex items-center space-x-2 hover:bg-[#23263a] transition-colors duration-150 rounded-lg px-2 py-1 cursor-pointer"
+              onClick={() => setDropdownOpen((prev) => !prev)}
+            >
+              <span className="text-white font-medium text-sm">Nadif Aulia Putra</span>
+              <div className="w-8 h-8 rounded-full bg-[#7367F0] flex items-center justify-center">
+                <img
+                  src="https://randomuser.me/api/portraits/men/32.jpg"
+                  alt="Profile"
+                  className="rounded-full w-full h-full object-cover"
+                />
+              </div>
+            </div>
+            {dropdownOpen && (
+              <div className="absolute right-0 mt-2 w-48 bg-[#181b28] border border-[#23263a] rounded-xl shadow-lg z-50 py-2 animate-fade-in">
+                <a
+                  href="/profile"
+                  className="block px-4 py-2 text-white hover:bg-[#23263a] rounded-lg transition-colors duration-100"
+                >
+                  Edit Profile
+                </a>
+                <button
+                  className="block w-full text-left px-4 py-2 text-red-400 hover:bg-[#23263a] rounded-lg transition-colors duration-100"
+                  onClick={() => alert('Logout')}
+                >
+                  Log Out
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </header>
       
       <div className="flex flex-1 overflow-hidden">
-        {/* Sidebar */}
-        <aside className="w-56 bg-[#141824] flex flex-col">
-          {/* Navigation */}
-          <div className="px-4 pt-3">
-            <div className="mb-5">
-              <Link href="/" className="flex items-center text-white p-2 rounded-md bg-[#7367F0] hover:bg-[#7367F0]/90">
-                <FiHome className="mr-3" size={18} />
-                <span>Home</span>
-              </Link>
-            </div>
-            <div className="mb-5">
-              <Link href="/home2" className="flex items-center text-[#B4B7BD] p-2 rounded-md hover:bg-[#7367F0]/20 hover:text-white">
-                <FiHome className="mr-3" size={18} />
-                <span>Home 2</span>
-              </Link>
-            </div>
-            <div className="mb-5">
-              <Link href="/settings" className="flex items-center text-[#B4B7BD] p-2 rounded-md hover:bg-[#7367F0]/20 hover:text-white">
-                <FiSettings className="mr-3" size={18} />
-                <span>Settings</span>
-              </Link>
-            </div>
-          </div>
-
-          {/* Collapsed View Button */}
-          <div className="mt-auto p-4 border-t border-[#3B4253]">
-            <button className="flex items-center text-[#B4B7BD] hover:text-white w-full">
-              <FiMenu className="mr-3" size={18} />
-              <span>Collapsed View</span>
-            </button>
-          </div>
-        </aside>
+        <Sidebar />
 
         {/* Main Content */}
         <main className="flex-1 flex flex-col overflow-hidden">
@@ -136,192 +135,287 @@ export default function Home() {
             <div className="space-y-6">
               {/* Page Title */}
               <div>
-                <h1 className="text-2xl font-bold text-white">Monitoring Dashboard</h1>
-                <p className="text-[#B4B7BD] mt-1">Welcome back, here&#39;s what&#39;s going on your monitoring right now</p>
+                <h1 className="mb-2 text-[27px] font-bold text-[#EFF2F6]" style={{ fontFamily: 'Nunito Sans, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif' }}>
+                  Monitoring Dashboard
+                </h1>
+                {/* Dropdown Select Device */}
+                <DeviceDropdown selected={selectedDevice} onSelect={setSelectedDevice} />
               </div>
 
               {/* Stats Cards */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               </div>
 
-              {/* Total Sells Chart */}
-              <div className="bg-[#0e111a] p-6 rounded-lg border border-[#3B4253]">
-                <div className="flex justify-between items-center mb-6">
-                  <div>
-                    <h3 className="text-lg font-semibold text-white">SDR 1</h3>
-                    <p className="text-[#B4B7BD] text-sm">Frequency dan Power (dB)</p>
-                  </div>
-                  <div className="flex items-center justify-end space-x-4">
-                    <div className="flex items-center">
-                      <div className="w-3 h-3 bg-[#7367F0] rounded-full mr-2"></div>
-                      <span className="text-white text-sm">Frequency</span>
+              {/* Grafik SDR sesuai device yang dipilih */}
+              {selectedDevice === 'SDR 1' && (
+                <div className="grid grid-cols-1 gap-6">
+                  {/* SDR 1 */}
+                  <div className="bg-[#0e111a] p-6 rounded-lg border border-[#3B4253]">
+                    <div className="flex justify-between items-center mb-6">
+                      <div>
+                        <h3 className="text-lg font-semibold text-white">SDR 1</h3>
+                        <p className="text-[#B4B7BD] text-sm">Power (dB)</p>
+                      </div>
+                      <div className="flex items-center justify-end space-x-4">
+                        <div className="flex items-center">
+                          <div className="w-3 h-3 bg-[#7367F0] rounded-full mr-2"></div>
+                          <span className="text-white text-sm">Power (dB)</span>
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex items-center">
-                      <div className="w-3 h-3 bg-[#7367F0] rounded-full mr-2"></div>
-                      <span className="text-white text-sm">Power (dB)</span>
+                    <div className="h-[250px]">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={sdrData} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#3A3B64" vertical={false} />
+                          <XAxis 
+                            dataKey="timestamp" 
+                            stroke="#B4B7BD" 
+                            axisLine={false} 
+                            tickLine={false} 
+                            style={{ fontSize: '10px' }}
+                          />
+                          <YAxis 
+                            stroke="#B4B7BD" 
+                            axisLine={false} 
+                            tickLine={false}
+                            domain={[0, -100]} 
+                            ticks={[0, -20, -40, -60, -80, -100]} 
+                            style={{ fontSize: '10px' }}
+                            tick={(props) => {
+                              const { x, y, payload } = props;
+                              if (payload.value === 0) {
+                                return (
+                                  <g transform={`translate(${x},${y})`}>
+                                    <text 
+                                      x={0} 
+                                      y={0} 
+                                      dy={4} 
+                                      textAnchor="end" 
+                                      fill="#FFFFFF" 
+                                      fontSize={12}
+                                      fontWeight="bold"
+                                    >
+                                      {payload.value}
+                                    </text>
+                                  </g>
+                                );
+                              }
+                              return (
+                                <g transform={`translate(${x},${y})`}>
+                                  <text 
+                                    x={0} 
+                                    y={0} 
+                                    dy={4} 
+                                    textAnchor="end" 
+                                    fill="#B4B7BD" 
+                                    fontSize={10}
+                                  >
+                                    {payload.value}
+                                  </text>
+                                </g>
+                              );
+                            }}
+                          />
+                          <Tooltip
+                            contentStyle={{
+                              backgroundColor: '#0e111a',
+                              border: '1px solid #3B4253',
+                              borderRadius: '4px',
+                            }}
+                            formatter={(value) => [`${value} dB`, 'Power']}
+                          />
+                          <Line
+                            type="monotone"
+                            dataKey="power"
+                            stroke="#7367F0"
+                            strokeWidth={2}
+                            dot={{ stroke: '#7367F0', strokeWidth: 2, r: 4 }}
+                            activeDot={{ r: 6, stroke: '#7367F0', strokeWidth: 2 }}
+                            isAnimationActive={false}
+                          />
+                          <ReferenceLine
+                            y={0}
+                            stroke="transparent"
+                            label={{
+                              value: "0",
+                              position: "top",
+                              fill: "#B4B7BD",
+                              fontSize: 10
+                            }}
+                          />
+                        </LineChart>
+                      </ResponsiveContainer>
                     </div>
                   </div>
                 </div>
-                <div className="h-[250px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={sdrData} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#3A3B64" vertical={false} />
-                      <XAxis 
-                        dataKey="timestamp" 
-                        stroke="#B4B7BD" 
-                        axisLine={false} 
-                        tickLine={false} 
-                        style={{ fontSize: '10px' }}
-                      />
-                      <YAxis 
-                        stroke="#B4B7BD" 
-                        axisLine={false} 
-                        tickLine={false}
-                        domain={[0, -100]} 
-                        ticks={[0, -20, -40, -60, -80, -100]} 
-                        style={{ fontSize: '10px' }}
-                        tick={(props) => {
-                          const { x, y, payload } = props;
-                          if (payload.value === 0) {
-                            return (
-                              <g transform={`translate(${x},${y})`}>
-                                <text 
-                                  x={0} 
-                                  y={0} 
-                                  dy={4} 
-                                  textAnchor="end" 
-                                  fill="#FFFFFF" 
-                                  fontSize={12}
-                                  fontWeight="bold"
-                                >
-                                  {payload.value}
-                                </text>
-                              </g>
-                            );
-                          }
-                          return (
-                            <g transform={`translate(${x},${y})`}>
-                              <text 
-                                x={0} 
-                                y={0} 
-                                dy={4} 
-                                textAnchor="end" 
-                                fill="#B4B7BD" 
-                                fontSize={10}
-                              >
-                                {payload.value}
-                              </text>
-                            </g>
-                          );
-                        }}
-                      />
-                      <Tooltip
-                        contentStyle={{
-                          backgroundColor: '#0e111a',
-                          border: '1px solid #3B4253',
-                          borderRadius: '4px',
-                        }}
-                        formatter={(value) => [`${value} dB`, 'Power']}
-                      />
-                      <Line
-                        type="monotone"
-                        dataKey="power"
-                        stroke="#7367F0"
-                        strokeWidth={2}
-                        dot={{ stroke: '#7367F0', strokeWidth: 2, r: 4 }}
-                        activeDot={{ r: 6, stroke: '#7367F0', strokeWidth: 2 }}
-                        isAnimationActive={false}
-                      />
-                      <ReferenceLine
-                        y={0}
-                        stroke="transparent"
-                        label={{
-                          value: "0",
-                          position: "top",
-                          fill: "#B4B7BD",
-                          fontSize: 10
-                        }}
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
+              )}
+              {selectedDevice === 'SDR 2' && (
+                <div className="grid grid-cols-1 gap-6">
+                  {/* SDR 2 */}
+                  <div className="bg-[#0e111a] p-6 rounded-lg border border-[#3B4253]">
+                    <div className="flex justify-between items-center mb-6">
+                      <div>
+                        <h3 className="text-lg font-semibold text-white">SDR 2</h3>
+                        <p className="text-[#B4B7BD] text-sm">Power (dB)</p>
+                      </div>
+                      <div className="flex items-center justify-end space-x-4">
+                        <div className="flex items-center">
+                          <div className="w-3 h-3 bg-[#7367F0] rounded-full mr-2"></div>
+                          <span className="text-white text-sm">Power (dB)</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="h-[250px]">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={sdrData} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#3A3B64" vertical={false} />
+                          <XAxis 
+                            dataKey="timestamp" 
+                            stroke="#B4B7BD" 
+                            axisLine={false} 
+                            tickLine={false} 
+                            style={{ fontSize: '10px' }}
+                          />
+                          <YAxis 
+                            stroke="#B4B7BD" 
+                            axisLine={false} 
+                            tickLine={false}
+                            domain={[0, -100]} 
+                            ticks={[0, -20, -40, -60, -80, -100]} 
+                            style={{ fontSize: '10px' }}
+                            tick={(props) => {
+                              const { x, y, payload } = props;
+                              if (payload.value === 0) {
+                                return (
+                                  <g transform={`translate(${x},${y})`}>
+                                    <text 
+                                      x={0} 
+                                      y={0} 
+                                      dy={4} 
+                                      textAnchor="end" 
+                                      fill="#FFFFFF" 
+                                      fontSize={12}
+                                      fontWeight="bold"
+                                    >
+                                      {payload.value}
+                                    </text>
+                                  </g>
+                                );
+                              }
+                              return (
+                                <g transform={`translate(${x},${y})`}>
+                                  <text 
+                                    x={0} 
+                                    y={0} 
+                                    dy={4} 
+                                    textAnchor="end" 
+                                    fill="#B4B7BD" 
+                                    fontSize={10}
+                                  >
+                                    {payload.value}
+                                  </text>
+                                </g>
+                              );
+                            }}
+                          />
+                          <Tooltip
+                            contentStyle={{
+                              backgroundColor: '#0e111a',
+                              border: '1px solid #3B4253',
+                              borderRadius: '4px',
+                            }}
+                            formatter={(value) => [`${value} dB`, 'Power']}
+                          />
+                          <Line
+                            type="monotone"
+                            dataKey="power"
+                            stroke="#7367F0"
+                            strokeWidth={2}
+                            dot={{ stroke: '#7367F0', strokeWidth: 2, r: 4 }}
+                            activeDot={{ r: 6, stroke: '#7367F0', strokeWidth: 2 }}
+                            isAnimationActive={false}
+                          />
+                          <ReferenceLine
+                            y={0}
+                            stroke="transparent"
+                            label={{
+                              value: "0",
+                              position: "top",
+                              fill: "#B4B7BD",
+                              fontSize: 10
+                            }}
+                          />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Main Dashboard Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Total Orders */}
-                <div className="bg-[#0e111a] p-6 rounded-lg border border-[#3B4253]">
-                  <div className="flex justify-between items-center mb-4">
-                    <div>
-                      <h3 className="text-lg font-semibold text-white">Total orders</h3>
-                      <p className="text-[#B4B7BD] text-xs">Last 7 days</p>
-                    </div>
-                    <div className="flex items-center">
-                      <span className="text-[#EA5455] text-sm bg-[#EA5455]/10 px-2 py-1 rounded">-6.8%</span>
-                    </div>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <h2 className="text-3xl font-bold text-white">16,247</h2>
-                  </div>
-                  <div className="h-[120px] my-3">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={orderBarData}>
-                        <Bar dataKey="value" fill="#7367F0" radius={[5, 5, 0, 0]} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                  <div className="flex flex-col gap-2 mt-4">
-                    <div className="flex justify-between items-center">
-                      <div className="flex items-center">
-                        <div className="w-3 h-3 bg-[#7367F0] rounded-sm mr-2"></div>
-                        <span className="text-[#B4B7BD] text-sm">Completed</span>
-                      </div>
-                      <span className="text-white text-sm">52%</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <div className="flex items-center">
-                        <div className="w-3 h-3 bg-[#B4B7BD]/30 rounded-sm mr-2"></div>
-                        <span className="text-[#B4B7BD] text-sm">Pending payment</span>
-                      </div>
-                      <span className="text-white text-sm">48%</span>
-                    </div>
-                  </div>
-                </div>
-
                 {/* New Customers */}
-                <div className="bg-[#0e111a] p-6 rounded-lg border border-[#3B4253]">
-                  <div className="flex justify-between items-center mb-4">
-                    <div>
-                      <h3 className="text-lg font-semibold text-white">New customers</h3>
-                      <p className="text-[#B4B7BD] text-xs">Last 7 days</p>
-                    </div>
-                    <div className="flex items-center">
-                      <span className="text-[#28C76F] text-sm bg-[#28C76F]/10 px-2 py-1 rounded">+26.5%</span>
-                    </div>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <h2 className="text-3xl font-bold text-white">356</h2>
-                  </div>
-                  <div className="h-[150px] mt-3">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={newCustomerData}>
-                        <Line 
-                          type="monotone" 
-                          dataKey="value" 
-                          stroke="#7367F0" 
-                          strokeWidth={3} 
-                          dot={false}
-                          activeDot={{ r: 6 }}
-                        />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </div>
-                </div>
               </div>
             </div>
           </div>
         </main>
       </div>
+    </div>
+  );
+}
+
+function DeviceDropdown({ selected, onSelect }: { selected: string, onSelect: (val: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const devices = ['SDR 1', 'SDR 2'];
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    }
+    if (open) {
+      document.addEventListener('mousedown', handleClickOutside);
+    } else {
+      document.removeEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [open]);
+
+  return (
+    <div className="relative mt-1 w-full max-w-xs" ref={dropdownRef}>
+      <button
+        className={`w-full text-left bg-[#181b28] border ${open ? 'border-[#3b82f6]' : 'border-[#3B4253]'} focus:border-[#3b82f6] text-white font-semibold text-base py-2 pl-5 pr-4 rounded-lg flex items-center justify-between transition-colors duration-150 outline-none`}
+        onClick={() => setOpen((prev) => !prev)}
+        type="button"
+        tabIndex={0}
+      >
+        {selected || 'Select Device'}
+        <svg className="ml-2 w-4 h-4 text-[#B4B7BD]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+      {open && (
+        <div className="absolute left-0 mt-2 w-full bg-[#181b28] border border-[#3B4253] rounded-lg z-10">
+          {devices.map((device) => (
+            <button
+              key={device}
+              className={`block w-full text-left px-5 py-2 text-white font-normal text-base hover:bg-[#3b82f6]/30 focus:bg-[#3b82f6]/30 transition-colors duration-100 ${selected === device ? 'font-semibold' : ''}`}
+              onClick={() => {
+                onSelect(device);
+                setOpen(false);
+              }}
+              type="button"
+            >
+              {device}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
