@@ -4,7 +4,7 @@ import Link from 'next/link';
 import Sidebar from '../components/Sidebar';
 import { 
   FiHome, FiShoppingCart, FiSettings, FiBell, FiPackage, 
-  FiSearch, FiSun, FiMenu, FiClock, FiChevronDown
+  FiSearch, FiSun, FiMenu, FiClock, FiChevronDown, FiActivity
 } from 'react-icons/fi';
 import {
   LineChart,
@@ -17,6 +17,7 @@ import {
   BarChart,
   Bar
 } from 'recharts';
+import { useState } from 'react';
 
 // Data untuk grafik
 const salesData = [
@@ -48,6 +49,40 @@ const newCustomerData = [
   { name: '06 May', value: 140 },
   { name: '07 May', value: 160 },
 ];
+
+function DeviceSubmenu() {
+  // Dropdown device
+  const [selectedDevice, setSelectedDevice] = useState('SDR 1');
+  const devices = ['SDR 1', 'SDR 2'];
+  // Generate random device ID setiap render
+  function generateRandomId() {
+    return Array.from({ length: 16 }, () => Math.floor(Math.random() * 16).toString(16)).join('');
+  }
+  const deviceId = generateRandomId();
+  return (
+    <div className="w-full">
+      <div className="bg-[#0e111a] border border-[#3B4253] rounded-lg flex items-center p-12 mb-6 w-full">
+        <div className="w-20 h-20 bg-[#7367F0]/20 rounded-full flex items-center justify-center mr-8">
+          <FiActivity className="w-12 h-12 text-[#7367F0]" />
+        </div>
+        <div>
+          <div className="flex items-center mb-2">
+            <select
+              className="bg-transparent text-white font-bold text-3xl outline-none appearance-none pr-6"
+              value={selectedDevice}
+              onChange={e => setSelectedDevice(e.target.value)}
+            >
+              {devices.map(device => (
+                <option key={device} value={device} className="text-black">{device}</option>
+              ))}
+            </select>
+          </div>
+          <div className="text-[#B4B7BD] text-xl">Device ID = {deviceId}</div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function Device() {
   return (
@@ -94,171 +129,11 @@ export default function Device() {
       
       <div className="flex flex-1 overflow-hidden">
         <Sidebar />
-
         {/* Main Content */}
         <main className="flex-1 flex flex-col overflow-hidden">
-          {/* Page Content */}
           <div className="flex-1 overflow-auto p-6">
-            <div className="space-y-6">
-              {/* Page Title */}
-              <div>
-                <h1 className="text-2xl font-bold text-white">Monitoring Dashboard</h1>
-                <p className="text-[#B4B7BD] mt-1">Welcome back, here&#39;s what&#39;s going on your monitoring right now</p>
-              </div>
-
-              {/* Stats Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bg-[#0e111a] p-4 rounded-lg flex items-center border border-[#3B4253]">
-                  <div className="w-12 h-12 bg-[#28C76F]/20 rounded-full flex items-center justify-center mr-4">
-                    <FiShoppingCart className="w-6 h-6 text-[#28C76F]" />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-bold text-white">57 new orders</h3>
-                    <p className="text-[#B4B7BD] text-sm">Awaiting processing</p>
-                  </div>
-                </div>
-
-                <div className="bg-[#0e111a] p-4 rounded-lg flex items-center border border-[#3B4253]">
-                  <div className="w-12 h-12 bg-[#FF9F43]/20 rounded-full flex items-center justify-center mr-4">
-                    <FiClock className="w-6 h-6 text-[#FF9F43]" />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-bold text-white">5 orders</h3>
-                    <p className="text-[#B4B7BD] text-sm">On hold</p>
-                  </div>
-                </div>
-
-                <div className="bg-[#0e111a] p-4 rounded-lg flex items-center border border-[#3B4253]">
-                  <div className="w-12 h-12 bg-[#EA5455]/20 rounded-full flex items-center justify-center mr-4">
-                    <FiPackage className="w-6 h-6 text-[#EA5455]" />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-bold text-white">15 products</h3>
-                    <p className="text-[#B4B7BD] text-sm">Out of stock</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Total Sells Chart */}
-              <div className="bg-[#0e111a] p-6 rounded-lg border border-[#3B4253]">
-                <div className="flex justify-between items-center mb-6">
-                  <div>
-                    <h3 className="text-lg font-semibold text-white">SDR 1</h3>
-                    <p className="text-[#B4B7BD] text-sm">Payment received across all channels</p>
-                  </div>
-                  <div className="flex items-center bg-[#0e111a] border border-[#3B4253] rounded-md">
-                    <button className="flex items-center text-white px-4 py-2">
-                      <span>Mar 1 - 31, 2023</span>
-                      <FiChevronDown className="ml-2" />
-                    </button>
-                  </div>
-                </div>
-                <div className="h-[250px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={salesData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#3A3B64" vertical={false} />
-                      <XAxis dataKey="name" stroke="#B4B7BD" axisLine={false} tickLine={false} />
-                      <YAxis stroke="#B4B7BD" axisLine={false} tickLine={false} />
-                      <Tooltip
-                        contentStyle={{
-                          backgroundColor: '#0e111a',
-                          border: '1px solid #3B4253',
-                          borderRadius: '4px',
-                        }}
-                      />
-                      <Line
-                        type="monotone"
-                        dataKey="actual"
-                        stroke="#7367F0"
-                        strokeWidth={3}
-                        dot={false}
-                        activeDot={{ r: 6 }}
-                      />
-                      <Line
-                        type="monotone"
-                        dataKey="projected"
-                        stroke="#7367F0"
-                        strokeWidth={2}
-                        strokeDasharray="5 5"
-                        dot={false}
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-
-              {/* Main Dashboard Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Total Orders */}
-                <div className="bg-[#0e111a] p-6 rounded-lg border border-[#3B4253]">
-                  <div className="flex justify-between items-center mb-4">
-                    <div>
-                      <h3 className="text-lg font-semibold text-white">Total orders</h3>
-                      <p className="text-[#B4B7BD] text-xs">Last 7 days</p>
-                    </div>
-                    <div className="flex items-center">
-                      <span className="text-[#EA5455] text-sm bg-[#EA5455]/10 px-2 py-1 rounded">-6.8%</span>
-                    </div>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <h2 className="text-3xl font-bold text-white">16,247</h2>
-                  </div>
-                  <div className="h-[120px] my-3">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={orderBarData}>
-                        <Bar dataKey="value" fill="#7367F0" radius={[5, 5, 0, 0]} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                  <div className="flex flex-col gap-2 mt-4">
-                    <div className="flex justify-between items-center">
-                      <div className="flex items-center">
-                        <div className="w-3 h-3 bg-[#7367F0] rounded-sm mr-2"></div>
-                        <span className="text-[#B4B7BD] text-sm">Completed</span>
-                      </div>
-                      <span className="text-white text-sm">52%</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <div className="flex items-center">
-                        <div className="w-3 h-3 bg-[#B4B7BD]/30 rounded-sm mr-2"></div>
-                        <span className="text-[#B4B7BD] text-sm">Pending payment</span>
-                      </div>
-                      <span className="text-white text-sm">48%</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* New Customers */}
-                <div className="bg-[#0e111a] p-6 rounded-lg border border-[#3B4253]">
-                  <div className="flex justify-between items-center mb-4">
-                    <div>
-                      <h3 className="text-lg font-semibold text-white">New customers</h3>
-                      <p className="text-[#B4B7BD] text-xs">Last 7 days</p>
-                    </div>
-                    <div className="flex items-center">
-                      <span className="text-[#28C76F] text-sm bg-[#28C76F]/10 px-2 py-1 rounded">+26.5%</span>
-                    </div>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <h2 className="text-3xl font-bold text-white">356</h2>
-                  </div>
-                  <div className="h-[150px] mt-3">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={newCustomerData}>
-                        <Line 
-                          type="monotone" 
-                          dataKey="value" 
-                          stroke="#7367F0" 
-                          strokeWidth={3} 
-                          dot={false}
-                          activeDot={{ r: 6 }}
-                        />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </div>
-                </div>
-              </div>
-            </div>
+            {/* Hanya tampilkan DeviceSubmenu */}
+            <DeviceSubmenu />
           </div>
         </main>
       </div>
