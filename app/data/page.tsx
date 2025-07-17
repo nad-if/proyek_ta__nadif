@@ -17,6 +17,8 @@ import {
   BarChart,
   Bar
 } from 'recharts';
+import { useState, useRef } from 'react';
+import React from 'react'; // Added missing import for React
 
 // Data untuk grafik
 const salesData = [
@@ -50,6 +52,24 @@ const newCustomerData = [
 ];
 
 export default function Data() {
+  const [selectedDevice, setSelectedDevice] = useState('SDR 1');
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const devices = ['SDR 1', 'SDR 2'];
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Tutup dropdown jika klik di luar
+  React.useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setDropdownOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
   return (
     <div className="flex flex-col h-screen bg-[#0e111a]">
       {/* Header */}
@@ -99,164 +119,82 @@ export default function Data() {
         <main className="flex-1 flex flex-col overflow-hidden">
           {/* Page Content */}
           <div className="flex-1 overflow-auto p-6">
-            <div className="space-y-6">
-              {/* Page Title */}
-              <div>
-                <h1 className="text-2xl font-bold text-white">Monitoring Dashboard</h1>
-                <p className="text-[#B4B7BD] mt-1">Welcome back, here&#39;s what&#39;s going on your monitoring right now</p>
-              </div>
-
-              {/* Stats Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bg-[#0e111a] p-4 rounded-lg flex items-center border border-[#3B4253]">
-                  <div className="w-12 h-12 bg-[#28C76F]/20 rounded-full flex items-center justify-center mr-4">
-                    <FiShoppingCart className="w-6 h-6 text-[#28C76F]" />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-bold text-white">57 new orders</h3>
-                    <p className="text-[#B4B7BD] text-sm">Awaiting processing</p>
-                  </div>
-                </div>
-
-                <div className="bg-[#0e111a] p-4 rounded-lg flex items-center border border-[#3B4253]">
-                  <div className="w-12 h-12 bg-[#FF9F43]/20 rounded-full flex items-center justify-center mr-4">
-                    <FiClock className="w-6 h-6 text-[#FF9F43]" />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-bold text-white">5 orders</h3>
-                    <p className="text-[#B4B7BD] text-sm">On hold</p>
-                  </div>
-                </div>
-
-                <div className="bg-[#0e111a] p-4 rounded-lg flex items-center border border-[#3B4253]">
-                  <div className="w-12 h-12 bg-[#EA5455]/20 rounded-full flex items-center justify-center mr-4">
-                    <FiPackage className="w-6 h-6 text-[#EA5455]" />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-bold text-white">15 products</h3>
-                    <p className="text-[#B4B7BD] text-sm">Out of stock</p>
-                  </div>
+            <div className="bg-[#0e111a] rounded-lg border border-[#3B4253] p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold text-white">Data Table</h2>
+                <div className="relative w-64" ref={dropdownRef}>
+                  <button
+                    type="button"
+                    className="block w-full text-left px-5 py-2 text-white font-normal text-base border border-[#3B4253] rounded-lg bg-[#23263a] focus:outline-none focus:ring-2 focus:ring-[#3b82f6] transition-colors duration-100"
+                    onClick={() => setDropdownOpen(!dropdownOpen)}
+                  >
+                    {selectedDevice}
+                    <span className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
+                      <FiChevronDown className="text-[#B4B7BD] w-5 h-5" />
+                    </span>
+                  </button>
+                  {dropdownOpen && (
+                    <div className="absolute left-0 mt-2 w-full bg-[#181b28] border border-[#3B4253] rounded-lg z-10 shadow-lg">
+                      {devices.map(device => (
+                        <button
+                          key={device}
+                          type="button"
+                          className={`block w-full text-left px-5 py-2 text-white font-normal text-base hover:bg-[#3b82f6]/30 focus:bg-[#3b82f6]/30 transition-colors duration-100 ${selectedDevice === device ? 'font-semibold' : ''}`}
+                          onClick={() => {
+                            setSelectedDevice(device);
+                            setDropdownOpen(false);
+                          }}
+                        >
+                          {device}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
-
-              {/* Total Sells Chart */}
-              <div className="bg-[#0e111a] p-6 rounded-lg border border-[#3B4253]">
-                <div className="flex justify-between items-center mb-6">
-                  <div>
-                    <h3 className="text-lg font-semibold text-white">SDR 1</h3>
-                    <p className="text-[#B4B7BD] text-sm">Payment received across all channels</p>
-                  </div>
-                  <div className="flex items-center bg-[#0e111a] border border-[#3B4253] rounded-md">
-                    <button className="flex items-center text-white px-4 py-2">
-                      <span>Mar 1 - 31, 2023</span>
-                      <FiChevronDown className="ml-2" />
-                    </button>
-                  </div>
-                </div>
-                <div className="h-[250px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={salesData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#3A3B64" vertical={false} />
-                      <XAxis dataKey="name" stroke="#B4B7BD" axisLine={false} tickLine={false} />
-                      <YAxis stroke="#B4B7BD" axisLine={false} tickLine={false} />
-                      <Tooltip
-                        contentStyle={{
-                          backgroundColor: '#0e111a',
-                          border: '1px solid #3B4253',
-                          borderRadius: '4px',
-                        }}
-                      />
-                      <Line
-                        type="monotone"
-                        dataKey="actual"
-                        stroke="#7367F0"
-                        strokeWidth={3}
-                        dot={false}
-                        activeDot={{ r: 6 }}
-                      />
-                      <Line
-                        type="monotone"
-                        dataKey="projected"
-                        stroke="#7367F0"
-                        strokeWidth={2}
-                        strokeDasharray="5 5"
-                        dot={false}
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-
-              {/* Main Dashboard Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Total Orders */}
-                <div className="bg-[#0e111a] p-6 rounded-lg border border-[#3B4253]">
-                  <div className="flex justify-between items-center mb-4">
-                    <div>
-                      <h3 className="text-lg font-semibold text-white">Total orders</h3>
-                      <p className="text-[#B4B7BD] text-xs">Last 7 days</p>
-                    </div>
-                    <div className="flex items-center">
-                      <span className="text-[#EA5455] text-sm bg-[#EA5455]/10 px-2 py-1 rounded">-6.8%</span>
-                    </div>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <h2 className="text-3xl font-bold text-white">16,247</h2>
-                  </div>
-                  <div className="h-[120px] my-3">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={orderBarData}>
-                        <Bar dataKey="value" fill="#7367F0" radius={[5, 5, 0, 0]} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                  <div className="flex flex-col gap-2 mt-4">
-                    <div className="flex justify-between items-center">
-                      <div className="flex items-center">
-                        <div className="w-3 h-3 bg-[#7367F0] rounded-sm mr-2"></div>
-                        <span className="text-[#B4B7BD] text-sm">Completed</span>
-                      </div>
-                      <span className="text-white text-sm">52%</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <div className="flex items-center">
-                        <div className="w-3 h-3 bg-[#B4B7BD]/30 rounded-sm mr-2"></div>
-                        <span className="text-[#B4B7BD] text-sm">Pending payment</span>
-                      </div>
-                      <span className="text-white text-sm">48%</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* New Customers */}
-                <div className="bg-[#0e111a] p-6 rounded-lg border border-[#3B4253]">
-                  <div className="flex justify-between items-center mb-4">
-                    <div>
-                      <h3 className="text-lg font-semibold text-white">New customers</h3>
-                      <p className="text-[#B4B7BD] text-xs">Last 7 days</p>
-                    </div>
-                    <div className="flex items-center">
-                      <span className="text-[#28C76F] text-sm bg-[#28C76F]/10 px-2 py-1 rounded">+26.5%</span>
-                    </div>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <h2 className="text-3xl font-bold text-white">356</h2>
-                  </div>
-                  <div className="h-[150px] mt-3">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={newCustomerData}>
-                        <Line 
-                          type="monotone" 
-                          dataKey="value" 
-                          stroke="#7367F0" 
-                          strokeWidth={3} 
-                          dot={false}
-                          activeDot={{ r: 6 }}
-                        />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </div>
-                </div>
+              <div className="overflow-x-auto">
+                <table className="min-w-full rounded-lg">
+                  <thead className="bg-[#141824]">
+                    <tr>
+                      <th className="px-4 py-2 border-b border-[#23263a] text-left text-[#B4B7BD] font-semibold">Device ID</th>
+                      <th className="px-4 py-2 border-b border-[#23263a] text-left text-[#B4B7BD] font-semibold">Time</th>
+                      <th className="px-4 py-2 border-b border-[#23263a] text-left text-[#B4B7BD] font-semibold">Frequency</th>
+                      <th className="px-4 py-2 border-b border-[#23263a] text-left text-[#B4B7BD] font-semibold">Power (dB)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr className="hover:bg-[#23263a] transition-colors">
+                      <td className="px-4 py-2 border-b border-[#23263a] text-white">035303d90dc8ee94</td>
+                      <td className="px-4 py-2 border-b border-[#23263a] text-white">2024-07-23 15:44:59</td>
+                      <td className="px-4 py-2 border-b border-[#23263a] text-white">868 MHz</td>
+                      <td className="px-4 py-2 border-b border-[#23263a] text-white">14</td>
+                    </tr>
+                    <tr className="hover:bg-[#23263a] transition-colors">
+                      <td className="px-4 py-2 border-b border-[#23263a] text-white">035303d90dc8ee94</td>
+                      <td className="px-4 py-2 border-b border-[#23263a] text-white">2024-07-23 15:45:04</td>
+                      <td className="px-4 py-2 border-b border-[#23263a] text-white">868 MHz</td>
+                      <td className="px-4 py-2 border-b border-[#23263a] text-white">14</td>
+                    </tr>
+                    <tr className="hover:bg-[#23263a] transition-colors">
+                      <td className="px-4 py-2 border-b border-[#23263a] text-white">035303d90dc8ee94</td>
+                      <td className="px-4 py-2 border-b border-[#23263a] text-white">2024-07-23 15:45:09</td>
+                      <td className="px-4 py-2 border-b border-[#23263a] text-white">868 MHz</td>
+                      <td className="px-4 py-2 border-b border-[#23263a] text-white">14</td>
+                    </tr>
+                    <tr className="hover:bg-[#23263a] transition-colors">
+                      <td className="px-4 py-2 border-b border-[#23263a] text-white">035303d90dc8ee94</td>
+                      <td className="px-4 py-2 border-b border-[#23263a] text-white">2024-07-23 15:45:14</td>
+                      <td className="px-4 py-2 border-b border-[#23263a] text-white">868 MHz</td>
+                      <td className="px-4 py-2 border-b border-[#23263a] text-white">14</td>
+                    </tr>
+                    <tr className="hover:bg-[#23263a] transition-colors">
+                      <td className="px-4 py-2 border-b border-[#23263a] text-white">035303d90dc8ee94</td>
+                      <td className="px-4 py-2 border-b border-[#23263a] text-white">2024-07-23 15:45:19</td>
+                      <td className="px-4 py-2 border-b border-[#23263a] text-white">868 MHz</td>
+                      <td className="px-4 py-2 border-b border-[#23263a] text-white">14</td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
             </div>
           </div>
