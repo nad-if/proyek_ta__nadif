@@ -9,9 +9,9 @@ export default function Sidebar() {
         <ul className="navbar-nav space-y-2">
           <li>
             <Link
-              href="/"
-              className={`flex items-center justify-between transition-all duration-200 ${pathname === '/' ? 'rounded-full' : 'rounded-md hover:rounded-full hover:bg-[#23263a]'}`}
-              style={pathname === '/' ? {
+              href="/dashboard"
+              className={`flex items-center justify-between transition-all duration-200 ${pathname === '/dashboard' ? 'rounded-full' : 'rounded-md hover:rounded-full hover:bg-[#23263a]'}`}
+              style={pathname === '/dashboard' ? {
                 background: '#2C3242',
                 color: '#fff',
                 fontWeight: 600,
@@ -28,12 +28,12 @@ export default function Sidebar() {
             >
               <span className="flex items-center">
                 {/* Ikon line graph */}
-                <svg className="mr-3" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={pathname === '/' ? '#fff' : '#9FA6BC'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg className="mr-3" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={pathname === '/dashboard' ? '#fff' : '#9FA6BC'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="3 17 9 11 13 15 21 7" />
-                  <circle cx="3" cy="17" r="1.5" fill={pathname === '/' ? '#fff' : '#9FA6BC'} />
-                  <circle cx="9" cy="11" r="1.5" fill={pathname === '/' ? '#fff' : '#9FA6BC'} />
-                  <circle cx="13" cy="15" r="1.5" fill={pathname === '/' ? '#fff' : '#9FA6BC'} />
-                  <circle cx="21" cy="7" r="1.5" fill={pathname === '/' ? '#fff' : '#9FA6BC'} />
+                  <circle cx="3" cy="17" r="1.5" fill={pathname === '/dashboard' ? '#fff' : '#9FA6BC'} />
+                  <circle cx="9" cy="11" r="1.5" fill={pathname === '/dashboard' ? '#fff' : '#9FA6BC'} />
+                  <circle cx="13" cy="15" r="1.5" fill={pathname === '/dashboard' ? '#fff' : '#9FA6BC'} />
+                  <circle cx="21" cy="7" r="1.5" fill={pathname === '/dashboard' ? '#fff' : '#9FA6BC'} />
                 </svg>
                 <span>Dashboards</span>
               </span>
