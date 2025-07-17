@@ -6,9 +6,11 @@ export default function Sidebar() {
   return (
     <aside className="w-56 bg-[#141824] flex flex-col">
       <nav className="px-2 pt-3">
-        <ul className="navbar-nav">
+        <ul className="navbar-nav space-y-2">
           <li>
-            <Link href="/" className={`flex items-center justify-between mb-2 ${pathname === '/' ? 'rounded-full' : ''}`}
+            <Link
+              href="/"
+              className={`flex items-center justify-between transition-all duration-200 ${pathname === '/' ? 'rounded-full' : 'rounded-md hover:rounded-full hover:bg-[#23263a]'}`}
               style={pathname === '/' ? {
                 background: '#2C3242',
                 color: '#fff',
@@ -21,7 +23,9 @@ export default function Sidebar() {
                 fontSize: '12.8px',
                 fontFamily: 'Nunito Sans, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif',
                 padding: '5.6px 8px 5.6px 16px'
-              }}>
+              }}
+              // Tidak perlu JS untuk hover warna
+            >
               <span className="flex items-center">
                 {/* Ikon line graph */}
                 <svg className="mr-3" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={pathname === '/' ? '#fff' : '#9FA6BC'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -36,8 +40,8 @@ export default function Sidebar() {
             </Link>
           </li>
           <li>
-            <Link href="/home2" className={`flex items-center mb-1 border-b border-[#23263a] hover:bg-[#23263a] hover:text-white transition-all duration-200 ${pathname === '/home2' ? 'rounded-full' : 'rounded-md hover:rounded-full'}`}
-              style={pathname === '/home2' ? {
+            <Link href="/device" className={`flex items-center hover:bg-[#23263a] transition-all duration-200 ${pathname === '/device' ? 'rounded-full' : 'rounded-md hover:rounded-full'}`}
+              style={pathname === '/device' ? {
                 background: '#2C3242',
                 color: '#fff',
                 fontWeight: 600,
@@ -51,7 +55,7 @@ export default function Sidebar() {
                 padding: '5.6px 8px 5.6px 16px'
               }}>
               {/* Ikon laptop outline */}
-              <svg className="mr-3" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={pathname === '/home2' ? '#fff' : '#9FA6BC'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg className="mr-3" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={pathname === '/device' ? '#fff' : '#9FA6BC'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="3" y="5" width="18" height="12" rx="2" />
                 <path d="M2 17h20" />
               </svg>
@@ -59,8 +63,8 @@ export default function Sidebar() {
             </Link>
           </li>
           <li>
-            <Link href="/settings" className={`flex items-center mb-1 border-b border-[#23263a] hover:bg-[#23263a] hover:text-white transition-all duration-200 ${pathname === '/settings' ? 'rounded-full' : 'rounded-md hover:rounded-full'}`}
-              style={pathname === '/settings' ? {
+            <Link href="/data" className={`flex items-center hover:bg-[#23263a] transition-all duration-200 ${pathname === '/data' ? 'rounded-full' : 'rounded-md hover:rounded-full'}`}
+              style={pathname === '/data' ? {
                 background: '#2C3242',
                 color: '#fff',
                 fontWeight: 600,
@@ -74,7 +78,7 @@ export default function Sidebar() {
                 padding: '5.6px 8px 5.6px 16px'
               }}>
               {/* Ikon database outline */}
-              <svg className="mr-3" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={pathname === '/settings' ? '#fff' : '#9FA6BC'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg className="mr-3" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={pathname === '/data' ? '#fff' : '#9FA6BC'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <ellipse cx="12" cy="7" rx="9" ry="4" />
                 <path d="M3 7v6c0 2.21 4.03 4 9 4s9-1.79 9-4V7" />
                 <path d="M3 13v4c0 2.21 4.03 4 9 4s9-1.79 9-4v-4" />

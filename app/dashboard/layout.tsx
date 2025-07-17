@@ -40,9 +40,9 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
               </Link>
             </li>
             <li>
-              <Link href="/dashboard/settings" className="flex items-center text-[#B4B7BD] hover:text-[#7367F0] p-2 rounded-lg hover:bg-[#2D2E3F]">
+              <Link href="/dashboard/data" className="flex items-center text-[#B4B7BD] hover:text-[#7367F0] p-2 rounded-lg hover:bg-[#2D2E3F]">
                 <FiSettings className="mr-3" />
-                Settings
+                Data
               </Link>
             </li>
           </ul>

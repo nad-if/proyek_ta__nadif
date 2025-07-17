@@ -49,7 +49,7 @@ const newCustomerData = [
   { name: '07 May', value: 160 },
 ];
 
-export default function Settings() {
+export default function Data() {
   return (
     <div className="flex flex-col h-screen bg-[#0e111a]">
       {/* Header */}
