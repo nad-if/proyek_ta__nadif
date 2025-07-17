@@ -4,7 +4,7 @@ import Link from 'next/link';
 import Sidebar from '../components/Sidebar';
 import { 
   FiHome, FiShoppingCart, FiSettings, FiBell, FiPackage, 
-  FiSearch, FiSun, FiMenu, FiClock, FiChevronDown
+  FiSearch, FiSun, FiMenu, FiClock, FiChevronDown, FiActivity
 } from 'react-icons/fi';
 import {
   LineChart,
@@ -76,10 +76,8 @@ export default function Data() {
       <header className="h-16 flex items-center justify-between px-6 border-b border-[#3B4253] bg-[#141824]">
         {/* Logo */}
         <div className="flex items-center">
-          <div className="w-7 h-7 rounded-md bg-[#EA5455] flex items-center justify-center mr-2">
-            <svg width="14" height="18" viewBox="0 0 14 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M7 0L14 6H10V12L4 6H8V0L7 0Z" fill="white"/>
-            </svg>
+          <div className="w-7 h-7 rounded-md bg-[#7367F0] flex items-center justify-center mr-2">
+            <FiActivity className="w-5 h-5 text-white" />
           </div>
           <h1 className="text-xl font-bold text-white">MONITOR</h1>
         </div>
@@ -104,7 +102,7 @@ export default function Data() {
           </button>
           <div className="w-8 h-8 rounded-full bg-[#7367F0] flex items-center justify-center">
             <img
-              src="https://randomuser.me/api/portraits/men/32.jpg"
+              src="/Google Profile.jpg"
               alt="Profile"
               className="rounded-full w-full h-full object-cover"
             />

@@ -96,7 +96,7 @@ export default function DashboardPage() {
               <span className="text-white font-medium text-sm">Nadif Aulia Putra</span>
               <div className="w-8 h-8 rounded-full bg-[#7367F0] flex items-center justify-center">
                 <img
-                  src="https://randomuser.me/api/portraits/men/32.jpg"
+                  src="/Google Profile.jpg"
                   alt="Profile"
                   className="rounded-full w-full h-full object-cover"
                 />
