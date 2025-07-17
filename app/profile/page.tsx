@@ -152,7 +152,7 @@ export default function Profile() {
                           </label>
                           <input
                             type="text"
-                            defaultValue="Muhammad Shafly Nurrasyid"
+                            defaultValue="Nadif Aulia Putra"
                             className="w-full bg-[#141824] border border-[#3B4253] rounded-md px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-[#7367F0]/50"
                           />
                         </div>
@@ -162,7 +162,7 @@ export default function Profile() {
                           </label>
                           <input
                             type="text"
-                            defaultValue="shafly_nadif"
+                            defaultValue="nadif"
                             className="w-full bg-[#141824] border border-[#3B4253] rounded-md px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-[#7367F0]/50"
                           />
                         </div>
@@ -174,7 +174,7 @@ export default function Profile() {
                             <FiMail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#676D7D]" />
                             <input
                               type="email"
-                              defaultValue="shafly.nadif@students.itb.ac.id"
+                              defaultValue="18120036@telecom.stei.itb.ac.id"
                               className="w-full bg-[#141824] border border-[#3B4253] rounded-md pl-10 pr-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-[#7367F0]/50"
                             />
                           </div>
