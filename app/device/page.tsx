@@ -136,6 +136,25 @@ function DeviceSubmenu({ selectedDevice }: { selectedDevice: string }) {
 
 export default function Device() {
   const [selectedDevice, setSelectedDevice] = useState('SDR 1');
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setDropdownOpen(false);
+      }
+    }
+    if (dropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    } else {
+      document.removeEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [dropdownOpen]);
+
   return (
     <div className="flex flex-col h-screen bg-[#0e111a]">
       {/* Header */}
@@ -163,12 +182,35 @@ export default function Device() {
           <button className="text-[#B4B7BD] hover:text-white p-1">
             <FiMenu className="w-5 h-5" />
           </button>
-          <div className="w-8 h-8 rounded-full bg-[#7367F0] flex items-center justify-center">
-            <img
-              src="/Google Profile.jpg"
-              alt="Profile"
-              className="rounded-full w-full h-full object-cover"
-            />
+          <div className="relative" ref={dropdownRef}>
+            <div
+              className="flex items-center space-x-2 rounded-lg px-2 py-1 cursor-pointer"
+              onClick={() => setDropdownOpen((prev) => !prev)}
+            >
+              <div className="w-8 h-8 rounded-full bg-[#7367F0] flex items-center justify-center">
+                <img
+                  src="/Google Profile.jpg"
+                  alt="Profile"
+                  className="rounded-full w-full h-full object-cover"
+                />
+              </div>
+            </div>
+            {dropdownOpen && (
+              <div className="absolute right-0 mt-2 w-48 bg-[#181b28] border border-[#23263a] rounded-xl shadow-lg z-50 py-2 animate-fade-in">
+                <a
+                  href="/profile"
+                  className="block px-4 py-2 text-white hover:bg-[#23263a] rounded-lg transition-colors duration-100"
+                >
+                  Edit Profile
+                </a>
+                <button
+                  className="block w-full text-left px-4 py-2 text-red-400 hover:bg-[#23263a] rounded-lg transition-colors duration-100"
+                  onClick={() => { window.location.href = '/'; }}
+                >
+                  Log Out
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </header>
