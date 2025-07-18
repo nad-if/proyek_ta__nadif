@@ -158,9 +158,6 @@ export default function Device() {
         </div>
         <div className="flex items-center space-x-4">
           <button className="text-[#B4B7BD] hover:text-white p-1">
-            <FiSun className="w-5 h-5" />
-          </button>
-          <button className="text-[#B4B7BD] hover:text-white p-1">
             <FiBell className="w-5 h-5" />
           </button>
           <button className="text-[#B4B7BD] hover:text-white p-1">
