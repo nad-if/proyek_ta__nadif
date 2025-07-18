@@ -87,10 +87,10 @@ export default function DashboardPage() {
           </button>
           <div className="relative" ref={dropdownRef}>
             <div
-              className="flex items-center space-x-2 hover:bg-[#23263a] transition-colors duration-150 rounded-lg px-2 py-1 cursor-pointer"
+              className="flex items-center space-x-2 rounded-lg px-2 py-1 cursor-pointer"
               onClick={() => setDropdownOpen((prev) => !prev)}
             >
-              <span className="text-white font-medium text-sm">Nadif Aulia Putra</span>
+              {/* <span className="text-white font-medium text-sm">Nadif Aulia Putra</span> */}
               <div className="w-8 h-8 rounded-full bg-[#7367F0] flex items-center justify-center">
                 <img
                   src="/Google Profile.jpg"
@@ -109,7 +109,7 @@ export default function DashboardPage() {
                 </a>
                 <button
                   className="block w-full text-left px-4 py-2 text-red-400 hover:bg-[#23263a] rounded-lg transition-colors duration-100"
-                  onClick={() => alert('Logout')}
+                  onClick={() => { window.location.href = '/'; }}
                 >
                   Log Out
                 </button>

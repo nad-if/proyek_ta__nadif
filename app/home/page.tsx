@@ -14,10 +14,10 @@ export default function HomePage() {
             Monitor
           </h1>
           <h2 className="text-3xl md:text-4xl font-bold mb-4 text-[#B4B7BD]">
-            Kerja, tanpa kekacauan
+            Lakukan fault detection dengan mudah
           </h2>
           <p className="text-lg md:text-xl text-[#B4B7BD] mb-6">
-            Dashboard ini membantu Anda mengelola data, perangkat, dan informasi penting dengan mudah dan efisien. Semua fitur terintegrasi dalam satu tempat tanpa kerumitan.
+            Dashboard ini membantu Anda mendapatkan data-data yang dapat digunakan untuk mendiagnosa kerusakan pada sistem yang kemudian dipakai untuk menjadwalkan reparasi ataupun maintenance.
           </p>
           <button
             className="bg-[#7367F0] hover:bg-[#5B50C7] text-white font-semibold px-8 py-3 rounded-lg shadow mb-4 transition"
