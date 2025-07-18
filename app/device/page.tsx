@@ -17,7 +17,7 @@ import {
   BarChart,
   Bar
 } from 'recharts';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 
 // Data untuk grafik
 const salesData = [
@@ -50,10 +50,64 @@ const newCustomerData = [
   { name: '07 May', value: 160 },
 ];
 
-function DeviceSubmenu() {
-  // Dropdown device
-  const [selectedDevice, setSelectedDevice] = useState('SDR 1');
+// Hapus DeviceSubmenu lama dan ganti dengan versi baru yang menggunakan DeviceDropdown
+function DeviceDropdown({ selected, onSelect }: { selected: string, onSelect: (val: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const devices = ['SDR 1', 'SDR 2'];
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    }
+    if (open) {
+      document.addEventListener('mousedown', handleClickOutside);
+    } else {
+      document.removeEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [open]);
+
+  return (
+    <div className="relative mt-1 w-full max-w-xs" ref={dropdownRef}>
+      <button
+        className={`w-full text-left bg-[#181b28] border ${open ? 'border-[#3b82f6]' : 'border-[#3B4253]'} focus:border-[#3b82f6] text-white font-semibold text-base py-2 pl-5 pr-4 rounded-lg flex items-center justify-between transition-colors duration-150 outline-none`}
+        onClick={() => setOpen((prev) => !prev)}
+        type="button"
+        tabIndex={0}
+      >
+        {selected || 'Select Device'}
+        <svg className="ml-2 w-4 h-4 text-[#B4B7BD]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+      {open && (
+        <div className="absolute left-0 mt-2 w-full bg-[#181b28] border border-[#3B4253] rounded-lg z-10">
+          {devices.map((device) => (
+            <button
+              key={device}
+              className={`block w-full text-left px-5 py-2 text-white font-normal text-base hover:bg-[#3b82f6]/30 focus:bg-[#3b82f6]/30 transition-colors duration-100 ${selected === device ? 'font-semibold' : ''}`}
+              onClick={() => {
+                onSelect(device);
+                setOpen(false);
+              }}
+              type="button"
+            >
+              {device}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Ubah DeviceSubmenu agar menerima selectedDevice dari props, bukan dari state lokal
+function DeviceSubmenu({ selectedDevice }: { selectedDevice: string }) {
   // Generate random device ID setiap render
   function generateRandomId() {
     return Array.from({ length: 16 }, () => Math.floor(Math.random() * 16).toString(16)).join('');
@@ -63,19 +117,15 @@ function DeviceSubmenu() {
     <div className="w-full">
       <div className="bg-[#0e111a] border border-[#3B4253] rounded-lg flex items-center p-12 mb-6 w-full">
         <div className="w-20 h-20 bg-[#7367F0]/20 rounded-full flex items-center justify-center mr-8">
-          <FiActivity className="w-12 h-12 text-[#7367F0]" />
+          {/* Ganti ikon dengan SVG laptop outline */}
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#7367F0" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="3" y="5" width="18" height="12" rx="2" />
+            <path d="M2 17h20" />
+          </svg>
         </div>
         <div>
           <div className="flex items-center mb-2">
-            <select
-              className="bg-transparent text-white font-bold text-3xl outline-none appearance-none pr-6"
-              value={selectedDevice}
-              onChange={e => setSelectedDevice(e.target.value)}
-            >
-              {devices.map(device => (
-                <option key={device} value={device} className="text-black">{device}</option>
-              ))}
-            </select>
+            <span className="text-white font-bold text-3xl">{selectedDevice}</span>
           </div>
           <div className="text-[#B4B7BD] text-xl">Device ID = {deviceId}</div>
         </div>
@@ -85,6 +135,7 @@ function DeviceSubmenu() {
 }
 
 export default function Device() {
+  const [selectedDevice, setSelectedDevice] = useState('SDR 1');
   return (
     <div className="flex flex-col h-screen bg-[#0e111a]">
       {/* Header */}
@@ -130,8 +181,10 @@ export default function Device() {
         {/* Main Content */}
         <main className="flex-1 flex flex-col overflow-hidden">
           <div className="flex-1 overflow-auto p-6">
-            {/* Hanya tampilkan DeviceSubmenu */}
-            <DeviceSubmenu />
+            {/* Dropdown di atas DeviceSubmenu */}
+            <DeviceDropdown selected={selectedDevice} onSelect={setSelectedDevice} />
+            {/* DeviceSubmenu menerima selectedDevice sebagai prop */}
+            <DeviceSubmenu selectedDevice={selectedDevice} />
           </div>
         </main>
       </div>
