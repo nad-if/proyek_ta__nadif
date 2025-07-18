@@ -19,6 +19,9 @@ import {
   Bar
 } from 'recharts';
 import { useState, useRef, useEffect } from 'react';
+import { DEVICE_IDS } from '../data/deviceIds';
+
+type DeviceName = keyof typeof DEVICE_IDS;
 
 // SDR Data
 const sdrData = [
@@ -55,9 +58,33 @@ const newCustomerData = [
 ];
 
 export default function DashboardPage() {
-  const [selectedDevice, setSelectedDevice] = useState('SDR 1');
+  const [selectedDevice, setSelectedDevice] = useState<DeviceName>('SDR 1');
+  const [chartData, setChartData] = useState<{ timestamp: string, power: number }[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setLoading(true);
+    setError(null);
+    const file = selectedDevice === 'SDR 1' ? '/data.json' : '/data2.json';
+    fetch(file)
+      .then((res) => {
+        if (!res.ok) throw new Error('Gagal fetch data');
+        return res.json();
+      })
+      .then((json) => {
+        // Mapping: ambil jam:menit:detik dari timestamp
+        const mapped = json.map((item: any) => ({
+          timestamp: item.timestamp.split(' ')[1], // ambil jam saja
+          power: item.power_db
+        }));
+        setChartData(mapped);
+      })
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
+  }, [selectedDevice]);
 
   return (
     <div className="flex flex-col h-screen bg-[#0e111a]">
@@ -81,9 +108,6 @@ export default function DashboardPage() {
         <div className="flex items-center space-x-4">
           <button className="text-[#B4B7BD] hover:text-white p-1">
             <FiBell className="w-5 h-5" />
-          </button>
-          <button className="text-[#B4B7BD] hover:text-white p-1">
-            <FiMenu className="w-5 h-5" />
           </button>
           <div className="relative" ref={dropdownRef}>
             <div
@@ -131,19 +155,22 @@ export default function DashboardPage() {
                   Monitoring Dashboard
                 </h1>
                 {/* Dropdown Select Device */}
-                <DeviceDropdown selected={selectedDevice} onSelect={setSelectedDevice} />
+                <DeviceDropdown selected={selectedDevice} onSelect={(val) => setSelectedDevice(val)} />
               </div>
               {/* Stats Cards */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               </div>
               {/* Grafik SDR sesuai device yang dipilih */}
-              {selectedDevice === 'SDR 1' && (
+              {loading ? (
+                <div className="text-white">Loading...</div>
+              ) : error ? (
+                <div className="text-red-500">Error: {error}</div>
+              ) : (
                 <div className="grid grid-cols-1 gap-6">
-                  {/* SDR 1 */}
                   <div className="bg-[#0e111a] p-6 rounded-lg border border-[#3B4253]">
                     <div className="flex justify-between items-center mb-6">
                       <div>
-                        <h3 className="text-lg font-semibold text-white">SDR 1</h3>
+                        <h3 className="text-lg font-semibold text-white">{selectedDevice}</h3>
                         <p className="text-[#B4B7BD] text-sm">Power (dB)</p>
                       </div>
                       <div className="flex items-center justify-end space-x-4">
@@ -155,109 +182,7 @@ export default function DashboardPage() {
                     </div>
                     <div className="h-[250px]">
                       <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={sdrData} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
-                          <CartesianGrid strokeDasharray="3 3" stroke="#3A3B64" vertical={false} />
-                          <XAxis 
-                            dataKey="timestamp" 
-                            stroke="#B4B7BD" 
-                            axisLine={false} 
-                            tickLine={false} 
-                            style={{ fontSize: '10px' }}
-                          />
-                          <YAxis 
-                            stroke="#B4B7BD" 
-                            axisLine={false} 
-                            tickLine={false}
-                            domain={[0, -100]} 
-                            ticks={[0, -20, -40, -60, -80, -100]} 
-                            style={{ fontSize: '10px' }}
-                            tick={(props) => {
-                              const { x, y, payload } = props;
-                              if (payload.value === 0) {
-                                return (
-                                  <g transform={`translate(${x},${y})`}>
-                                    <text 
-                                      x={0} 
-                                      y={0} 
-                                      dy={4} 
-                                      textAnchor="end" 
-                                      fill="#FFFFFF" 
-                                      fontSize={12}
-                                      fontWeight="bold"
-                                    >
-                                      {payload.value}
-                                    </text>
-                                  </g>
-                                );
-                              }
-                              return (
-                                <g transform={`translate(${x},${y})`}>
-                                  <text 
-                                    x={0} 
-                                    y={0} 
-                                    dy={4} 
-                                    textAnchor="end" 
-                                    fill="#B4B7BD" 
-                                    fontSize={10}
-                                  >
-                                    {payload.value}
-                                  </text>
-                                </g>
-                              );
-                            }}
-                          />
-                          <Tooltip
-                            contentStyle={{
-                              backgroundColor: '#0e111a',
-                              border: '1px solid #3B4253',
-                              borderRadius: '4px',
-                            }}
-                            formatter={(value) => [`${value} dB`, 'Power']}
-                          />
-                          <Line
-                            type="monotone"
-                            dataKey="power"
-                            stroke="#7367F0"
-                            strokeWidth={2}
-                            dot={{ stroke: '#7367F0', strokeWidth: 2, r: 4 }}
-                            activeDot={{ r: 6, stroke: '#7367F0', strokeWidth: 2 }}
-                            isAnimationActive={false}
-                          />
-                          <ReferenceLine
-                            y={0}
-                            stroke="transparent"
-                            label={{
-                              value: "0",
-                              position: "top",
-                              fill: "#B4B7BD",
-                              fontSize: 10
-                            }}
-                          />
-                        </LineChart>
-                      </ResponsiveContainer>
-                    </div>
-                  </div>
-                </div>
-              )}
-              {selectedDevice === 'SDR 2' && (
-                <div className="grid grid-cols-1 gap-6">
-                  {/* SDR 2 */}
-                  <div className="bg-[#0e111a] p-6 rounded-lg border border-[#3B4253]">
-                    <div className="flex justify-between items-center mb-6">
-                      <div>
-                        <h3 className="text-lg font-semibold text-white">SDR 2</h3>
-                        <p className="text-[#B4B7BD] text-sm">Power (dB)</p>
-                      </div>
-                      <div className="flex items-center justify-end space-x-4">
-                        <div className="flex items-center">
-                          <div className="w-3 h-3 bg-[#7367F0] rounded-full mr-2"></div>
-                          <span className="text-white text-sm">Power (dB)</span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="h-[250px]">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={sdrData} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
+                        <LineChart data={chartData} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
                           <CartesianGrid strokeDasharray="3 3" stroke="#3A3B64" vertical={false} />
                           <XAxis 
                             dataKey="timestamp" 
@@ -355,10 +280,10 @@ export default function DashboardPage() {
   );
 }
 
-function DeviceDropdown({ selected, onSelect }: { selected: string, onSelect: (val: string) => void }) {
+function DeviceDropdown({ selected, onSelect }: { selected: DeviceName, onSelect: (val: DeviceName) => void }) {
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const devices = ['SDR 1', 'SDR 2'];
+  const devices: DeviceName[] = ['SDR 1', 'SDR 2'];
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {

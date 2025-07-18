@@ -19,6 +19,9 @@ import {
 } from 'recharts';
 import { useState, useRef } from 'react';
 import React from 'react'; // Added missing import for React
+import { DEVICE_IDS } from './deviceIds';
+
+type DeviceName = keyof typeof DEVICE_IDS;
 
 // Data untuk grafik
 const salesData = [
@@ -51,8 +54,9 @@ const newCustomerData = [
   { name: '07 May', value: 160 },
 ];
 
-export default function Data() {
-  const [selectedDevice, setSelectedDevice] = useState('SDR 1');
+type DataProps = {};
+export default function Data(props: DataProps) {
+  const [selectedDevice, setSelectedDevice] = useState<DeviceName>('SDR 1');
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const devices = ['SDR 1', 'SDR 2'];
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -97,9 +101,6 @@ export default function Data() {
         <div className="flex items-center space-x-4">
           <button className="text-[#B4B7BD] hover:text-white p-1">
             <FiBell className="w-5 h-5" />
-          </button>
-          <button className="text-[#B4B7BD] hover:text-white p-1">
-            <FiMenu className="w-5 h-5" />
           </button>
           <div className="relative" ref={dropdownRef}>
             <div
@@ -163,7 +164,7 @@ export default function Data() {
                           type="button"
                           className={`block w-full text-left px-5 py-2 text-white font-normal text-base hover:bg-[#3b82f6]/30 focus:bg-[#3b82f6]/30 transition-colors duration-100 ${selectedDevice === device ? 'font-semibold' : ''}`}
                           onClick={() => {
-                            setSelectedDevice(device);
+                            setSelectedDevice(device as DeviceName);
                             setDropdownOpen(false);
                           }}
                         >
@@ -186,31 +187,31 @@ export default function Data() {
                   </thead>
                   <tbody>
                     <tr className="hover:bg-[#23263a] transition-colors">
-                      <td className="px-4 py-2 border-b border-[#23263a] text-white">035303d90dc8ee94</td>
+                      <td className="px-4 py-2 border-b border-[#23263a] text-white">{DEVICE_IDS[selectedDevice]}</td>
                       <td className="px-4 py-2 border-b border-[#23263a] text-white">2024-07-23 15:44:59</td>
                       <td className="px-4 py-2 border-b border-[#23263a] text-white">868 MHz</td>
                       <td className="px-4 py-2 border-b border-[#23263a] text-white">14</td>
                     </tr>
                     <tr className="hover:bg-[#23263a] transition-colors">
-                      <td className="px-4 py-2 border-b border-[#23263a] text-white">035303d90dc8ee94</td>
+                      <td className="px-4 py-2 border-b border-[#23263a] text-white">{DEVICE_IDS[selectedDevice]}</td>
                       <td className="px-4 py-2 border-b border-[#23263a] text-white">2024-07-23 15:45:04</td>
                       <td className="px-4 py-2 border-b border-[#23263a] text-white">868 MHz</td>
                       <td className="px-4 py-2 border-b border-[#23263a] text-white">14</td>
                     </tr>
                     <tr className="hover:bg-[#23263a] transition-colors">
-                      <td className="px-4 py-2 border-b border-[#23263a] text-white">035303d90dc8ee94</td>
+                      <td className="px-4 py-2 border-b border-[#23263a] text-white">{DEVICE_IDS[selectedDevice]}</td>
                       <td className="px-4 py-2 border-b border-[#23263a] text-white">2024-07-23 15:45:09</td>
                       <td className="px-4 py-2 border-b border-[#23263a] text-white">868 MHz</td>
                       <td className="px-4 py-2 border-b border-[#23263a] text-white">14</td>
                     </tr>
                     <tr className="hover:bg-[#23263a] transition-colors">
-                      <td className="px-4 py-2 border-b border-[#23263a] text-white">035303d90dc8ee94</td>
+                      <td className="px-4 py-2 border-b border-[#23263a] text-white">{DEVICE_IDS[selectedDevice]}</td>
                       <td className="px-4 py-2 border-b border-[#23263a] text-white">2024-07-23 15:45:14</td>
                       <td className="px-4 py-2 border-b border-[#23263a] text-white">868 MHz</td>
                       <td className="px-4 py-2 border-b border-[#23263a] text-white">14</td>
                     </tr>
                     <tr className="hover:bg-[#23263a] transition-colors">
-                      <td className="px-4 py-2 border-b border-[#23263a] text-white">035303d90dc8ee94</td>
+                      <td className="px-4 py-2 border-b border-[#23263a] text-white">{DEVICE_IDS[selectedDevice]}</td>
                       <td className="px-4 py-2 border-b border-[#23263a] text-white">2024-07-23 15:45:19</td>
                       <td className="px-4 py-2 border-b border-[#23263a] text-white">868 MHz</td>
                       <td className="px-4 py-2 border-b border-[#23263a] text-white">14</td>

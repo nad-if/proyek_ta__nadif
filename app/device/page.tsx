@@ -18,6 +18,9 @@ import {
   Bar
 } from 'recharts';
 import { useState, useRef, useEffect } from 'react';
+import { DEVICE_IDS } from '../data/deviceIds';
+
+type DeviceName = keyof typeof DEVICE_IDS;
 
 // Data untuk grafik
 const salesData = [
@@ -107,12 +110,9 @@ function DeviceDropdown({ selected, onSelect }: { selected: string, onSelect: (v
 }
 
 // Ubah DeviceSubmenu agar menerima selectedDevice dari props, bukan dari state lokal
-function DeviceSubmenu({ selectedDevice }: { selectedDevice: string }) {
-  // Generate random device ID setiap render
-  function generateRandomId() {
-    return Array.from({ length: 16 }, () => Math.floor(Math.random() * 16).toString(16)).join('');
-  }
-  const deviceId = generateRandomId();
+function DeviceSubmenu({ selectedDevice }: { selectedDevice: DeviceName }) {
+  // Ambil deviceId dari mapping DEVICE_IDS
+  const deviceId = DEVICE_IDS[selectedDevice];
   return (
     <div className="w-full">
       <div className="bg-[#0e111a] border border-[#3B4253] rounded-lg flex items-center p-12 mb-6 w-full">
@@ -179,9 +179,6 @@ export default function Device() {
           <button className="text-[#B4B7BD] hover:text-white p-1">
             <FiBell className="w-5 h-5" />
           </button>
-          <button className="text-[#B4B7BD] hover:text-white p-1">
-            <FiMenu className="w-5 h-5" />
-          </button>
           <div className="relative" ref={dropdownRef}>
             <div
               className="flex items-center space-x-2 rounded-lg px-2 py-1 cursor-pointer"
@@ -223,7 +220,7 @@ export default function Device() {
             {/* Dropdown di atas DeviceSubmenu */}
             <DeviceDropdown selected={selectedDevice} onSelect={setSelectedDevice} />
             {/* DeviceSubmenu menerima selectedDevice sebagai prop */}
-            <DeviceSubmenu selectedDevice={selectedDevice} />
+            <DeviceSubmenu selectedDevice={selectedDevice as DeviceName} />
           </div>
         </main>
       </div>

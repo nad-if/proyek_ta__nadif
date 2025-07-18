@@ -1,0 +1,167 @@
+[
+    {
+        "timestamp": "2025-03-06 07:56:29",
+        "power_db": -16.53,
+        "frequency": 455525000.0
+    },
+    {
+        "timestamp": "2025-03-06 07:56:29",
+        "power_db": -16.39,
+        "frequency": 455587500.0
+    },
+    {
+        "timestamp": "2025-03-06 07:56:29",
+        "power_db": -17.11,
+        "frequency": 455650000.0
+    },
+    {
+        "timestamp": "2025-03-06 07:56:29",
+        "power_db": -20.38,
+        "frequency": 455712500.0
+    },
+    {
+        "timestamp": "2025-03-06 07:56:29",
+        "power_db": -26.0,
+        "frequency": 455775000.0
+    },
+    {
+        "timestamp": "2025-03-06 07:56:29",
+        "power_db": -23.75,
+        "frequency": 455837500.0
+    },
+    {
+        "timestamp": "2025-03-06 07:56:29",
+        "power_db": -20.58,
+        "frequency": 455900000.0
+    },
+    {
+        "timestamp": "2025-03-06 07:56:29",
+        "power_db": -20.13,
+        "frequency": 455962500.0
+    },
+    {
+        "timestamp": "2025-03-06 07:56:29",
+        "power_db": -22.06,
+        "frequency": 456025000.0
+    },
+    {
+        "timestamp": "2025-03-06 07:56:29",
+        "power_db": -26.06,
+        "frequency": 456087500.0
+    },
+    {
+        "timestamp": "2025-03-06 07:56:29",
+        "power_db": -25.12,
+        "frequency": 456150000.0
+    },
+    {
+        "timestamp": "2025-03-06 07:56:29",
+        "power_db": -21.74,
+        "frequency": 456212500.0
+    },
+    {
+        "timestamp": "2025-03-06 07:56:29",
+        "power_db": -21.76,
+        "frequency": 456275000.0
+    },
+    {
+        "timestamp": "2025-03-06 07:56:29",
+        "power_db": -24.69,
+        "frequency": 456337500.0
+    },
+    {
+        "timestamp": "2025-03-06 07:56:29",
+        "power_db": -20.51,
+        "frequency": 456400000.0
+    },
+    {
+        "timestamp": "2025-03-06 07:56:29",
+        "power_db": -15.66,
+        "frequency": 456462500.0
+    },
+    {
+        "timestamp": "2025-03-06 07:56:29",
+        "power_db": -14.32,
+        "frequency": 456525000.0
+    },
+    {
+        "timestamp": "2025-03-06 07:56:29",
+        "power_db": -14.32,
+        "frequency": 456587500.0
+    },
+    {
+        "timestamp": "2025-03-06 07:56:29",
+        "power_db": -17.18,
+        "frequency": 456650000.0
+    },
+    {
+        "timestamp": "2025-03-06 07:56:29",
+        "power_db": -23.25,
+        "frequency": 456712500.0
+    },
+    {
+        "timestamp": "2025-03-06 07:56:29",
+        "power_db": -27.81,
+        "frequency": 456775000.0
+    },
+    {
+        "timestamp": "2025-03-06 07:56:29",
+        "power_db": -19.9,
+        "frequency": 456837500.0
+    },
+    {
+        "timestamp": "2025-03-06 07:56:29",
+        "power_db": -15.1,
+        "frequency": 456900000.0
+    },
+    {
+        "timestamp": "2025-03-06 07:56:29",
+        "power_db": -11.96,
+        "frequency": 456962500.0
+    },
+    {
+        "timestamp": "2025-03-06 07:56:29",
+        "power_db": -10.19,
+        "frequency": 457025000.0
+    },
+    {
+        "timestamp": "2025-03-06 07:56:29",
+        "power_db": -10.08,
+        "frequency": 457087500.0
+    },
+    {
+        "timestamp": "2025-03-06 07:56:29",
+        "power_db": -12.31,
+        "frequency": 457150000.0
+    },
+    {
+        "timestamp": "2025-03-06 07:56:29",
+        "power_db": -18.62,
+        "frequency": 457212500.0
+    },
+    {
+        "timestamp": "2025-03-06 07:56:29",
+        "power_db": -21.18,
+        "frequency": 457275000.0
+    },
+    {
+        "timestamp": "2025-03-06 07:56:29",
+        "power_db": -15.15,
+        "frequency": 457337500.0
+    },
+    {
+        "timestamp": "2025-03-06 07:56:29",
+        "power_db": -13.9,
+        "frequency": 457400000.0
+    },
+    {
+        "timestamp": "2025-03-06 07:56:29",
+        "power_db": -15.19,
+        "frequency": 457462500.0
+    },
+    {
+        "timestamp": "2025-03-06 07:56:29",
+        "power_db": -15.19,
+        "frequency": 457525000.0
+    }
+]
