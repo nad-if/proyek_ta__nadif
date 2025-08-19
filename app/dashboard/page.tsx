@@ -18,7 +18,7 @@ import {
   BarChart,
   Bar
 } from 'recharts';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { DEVICE_IDS } from '../data/deviceIds';
 
 type DeviceName = keyof typeof DEVICE_IDS;
@@ -57,6 +57,11 @@ const newCustomerData = [
   { name: '07 May', value: 160 },
 ];
 
+// Threshold power untuk status transmit/receive (PTT on/off)
+const PTT_THRESHOLD = -20; // diubah ke -20 dB
+// Kalibrasi perbedaan gain antara channel reflected (SDR2) terhadap forward (SDR1) dalam dB
+const REFLECTED_CAL_DB = 0; // sesuaikan jika diperlukan
+
 export default function DashboardPage() {
   const [selectedDevice, setSelectedDevice] = useState<DeviceName>('SDR 1');
   const [chartData, setChartData] = useState<{ timestamp: string, power: number }[]>([]);
@@ -64,23 +69,127 @@ export default function DashboardPage() {
   const [error, setError] = useState<string | null>(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const [pttData, setPttData] = useState<{ timestamp: string, ptt: number }[]>([]);
+  const [swrData, setSwrData] = useState<{ frequency: number, swr: number, swrRaw: number }[]>([]);
+  const powerScrollRef = useRef<HTMLDivElement>(null);
+  const pttScrollRef = useRef<HTMLDivElement>(null);
+  const swrScrollRef = useRef<HTMLDivElement>(null);
+  const isSdr1 = selectedDevice === 'SDR 1';
+
+  const swrFreqMinMax = useMemo(() => {
+    if (!swrData || swrData.length === 0) return null as null | { min: number; max: number };
+    let min = Number.POSITIVE_INFINITY;
+    let max = Number.NEGATIVE_INFINITY;
+    for (const d of swrData) {
+      if (d.frequency < min) min = d.frequency;
+      if (d.frequency > max) max = d.frequency;
+    }
+    return { min, max };
+  }, [swrData]);
+
+  // Lebar chart dinamis untuk memungkinkan horizontal scroll
+  const swrChartWidthPx = useMemo(() => {
+    const n = swrData?.length ?? 0;
+    // 12 px per titik, minimal 800 px agar tetap terbaca
+    return Math.max(800, n * 12);
+  }, [swrData]);
+
+  const timeChartWidthPx = useMemo(() => {
+    const n = chartData?.length ?? 0;
+    return Math.max(800, n * 12);
+  }, [chartData]);
+
+  const pttChartWidthPx = useMemo(() => {
+    const n = pttData?.length ?? 0;
+    return Math.max(800, n * 12);
+  }, [pttData]);
+
+  // Tidak ada sinkronisasi antar grafik; masing-masing punya scrollbar sendiri
 
   useEffect(() => {
     setLoading(true);
     setError(null);
-    const file = selectedDevice === 'SDR 1' ? '/data.json' : '/data2.json';
-    fetch(file)
-      .then((res) => {
-        if (!res.ok) throw new Error('Gagal fetch data');
-        return res.json();
-      })
-      .then((json) => {
-        // Mapping: ambil jam:menit:detik dari timestamp
-        const mapped = json.map((item: any) => ({
-          timestamp: item.timestamp.split(' ')[1], // ambil jam saja
+    const fileSelected = selectedDevice === 'SDR 1' ? '/data.json' : '/data2.json';
+
+    Promise.all([
+      fetch(fileSelected),           // untuk grafik power & PTT
+      fetch('/data.json'),           // diasumsikan forward power (SDR 1)
+      fetch('/data2.json')           // diasumsikan reflected power (SDR 2)
+    ])
+      .then(async ([resSel, resFwd, resRef]) => {
+        if (!resSel.ok) throw new Error('Gagal fetch data utama');
+        if (!resFwd.ok || !resRef.ok) {
+          // Jika salah satu gagal, tetap render chart utama, tapi SWR kosong
+          const jsonSel = await resSel.json();
+          const mappedSel = jsonSel.map((item: any) => ({
+            timestamp: item.timestamp.split(' ')[1],
+            power: item.power_db
+          }));
+          setChartData(mappedSel);
+          const mappedPTT = mappedSel.map((item: any) => ({
+            timestamp: item.timestamp,
+            ptt: item.power > PTT_THRESHOLD ? 1 : 0
+          }));
+          setPttData(mappedPTT);
+          setSwrData([]);
+          return;
+        }
+
+        const [jsonSel, jsonFwd, jsonRef] = await Promise.all([
+          resSel.json(),
+          resFwd.json(),
+          resRef.json()
+        ]);
+
+        // Mapping untuk grafik power & PTT (berdasarkan device yang dipilih)
+        const mappedSel = jsonSel.map((item: any) => ({
+          timestamp: item.timestamp.split(' ')[1],
           power: item.power_db
         }));
-        setChartData(mapped);
+        setChartData(mappedSel);
+        const mappedPTT = mappedSel.map((item: any) => ({
+          timestamp: item.timestamp,
+          ptt: item.power > PTT_THRESHOLD ? 1 : 0
+        }));
+        setPttData(mappedPTT);
+
+        // Pilih sampel terbaru per frekuensi untuk forward (SDR1) dan reflected (SDR2)
+        const forwardLatest = new Map<number, { powerDb: number, timestamp: string }>();
+        for (const it of jsonFwd) {
+          if (typeof it.frequency !== 'number' || typeof it.power_db !== 'number' || typeof it.timestamp !== 'string') continue;
+          const prev = forwardLatest.get(it.frequency);
+          if (!prev || it.timestamp > prev.timestamp) {
+            forwardLatest.set(it.frequency, { powerDb: it.power_db, timestamp: it.timestamp });
+          }
+        }
+        const reflectedLatest = new Map<number, { powerDb: number, timestamp: string }>();
+        for (const it of jsonRef) {
+          if (typeof it.frequency !== 'number' || typeof it.power_db !== 'number' || typeof it.timestamp !== 'string') continue;
+          const prev = reflectedLatest.get(it.frequency);
+          if (!prev || it.timestamp > prev.timestamp) {
+            reflectedLatest.set(it.frequency, { powerDb: it.power_db, timestamp: it.timestamp });
+          }
+        }
+
+        // Hitung satu nilai SWR per frekuensi berdasarkan sampel terbaru
+        const swrList: { frequency: number, swr: number, swrRaw: number }[] = [];
+        for (const [freq, fwd] of forwardLatest.entries()) {
+          const ref = reflectedLatest.get(freq);
+          if (!ref) continue;
+          const pfDb = fwd.powerDb;
+          const prDb = ref.powerDb + REFLECTED_CAL_DB;
+          const ratioLin = Math.pow(10, (prDb - pfDb) / 10);
+          const gammaMag = Math.sqrt(Math.max(0, ratioLin));
+          const gammaClamped = Math.min(gammaMag, 0.9999);
+          const swrRaw = (1 + gammaClamped) / (1 - gammaClamped);
+          const swr = Math.max(1, Math.min(10, swrRaw));
+          if (Number.isFinite(swrRaw)) {
+            swrList.push({ frequency: freq, swr, swrRaw });
+          }
+        }
+        // Urutkan berdasarkan frequency
+        swrList.sort((a, b) => a.frequency - b.frequency);
+        setSwrData(swrList);
       })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
@@ -180,9 +289,10 @@ export default function DashboardPage() {
                         </div>
                       </div>
                     </div>
-                    <div className="h-[250px]">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={chartData} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
+                    <div className="h-[250px] overflow-x-auto" ref={powerScrollRef}>
+                      <div className="min-w-full" style={{ width: `${timeChartWidthPx}px`, height: '100%' }}>
+                        <ResponsiveContainer width="100%" height="100%">
+                          <LineChart data={chartData} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
                           <CartesianGrid strokeDasharray="3 3" stroke="#3A3B64" vertical={false} />
                           <XAxis 
                             dataKey="timestamp" 
@@ -260,8 +370,177 @@ export default function DashboardPage() {
                               fontSize: 10
                             }}
                           />
-                        </LineChart>
-                      </ResponsiveContainer>
+                          </LineChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
+                  </div>
+                  {/* Row: PTT dan SWR side-by-side */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Grafik PTT (Transmit/Receive) */}
+                    <div className="bg-[#0e111a] p-6 rounded-lg border border-[#3B4253]">
+                      <div className="flex justify-between items-center mb-4">
+                        <div>
+                          <h3 className="text-lg font-semibold text-white">Status Transmit (PTT)</h3>
+                          <p className="text-[#B4B7BD] text-sm">1 = PTT ON (Transmit), 0 = PTT OFF (Receive)</p>
+                        </div>
+                      </div>
+                      <div className="h-[120px] flex">
+                        <div className="w-20 pr-2">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <LineChart data={pttData} margin={{ top: 5, right: 0, left: 0, bottom: 5 }}>
+                              <YAxis
+                                stroke="#B4B7BD"
+                                axisLine={false}
+                                tickLine={false}
+                                domain={[-0.1, 1.1]}
+                                ticks={[0, 1]}
+                                tick={(props) => {
+                                  const { x, y, payload } = props as any;
+                                  const isOn = payload?.value === 1;
+                                  const dy = isOn ? -1 : -3; // naikkan sedikit, OFF lebih banyak
+                                  return (
+                                    <g transform={`translate(${x},${y})`}>
+                                      <text x={0} y={0} dy={dy} textAnchor="end" dominantBaseline="middle" fill="#B4B7BD" fontSize={12}>
+                                        {isOn ? 'PTT ON' : 'PTT OFF'}
+                                      </text>
+                                    </g>
+                                  );
+                                }}
+                              />
+                              <XAxis dataKey="timestamp" tick={false} axisLine={false} height={40} />
+                            </LineChart>
+                          </ResponsiveContainer>
+                        </div>
+                        <div className="flex-1 overflow-x-auto" ref={pttScrollRef}>
+                          <div className="min-w-full" style={{ width: `${pttChartWidthPx}px`, height: '100%' }}>
+                            <ResponsiveContainer width="100%" height="100%">
+                              <LineChart data={pttData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="#3A3B64" vertical={false} horizontal={false} />
+                                <XAxis 
+                                  dataKey="timestamp" 
+                                  stroke="#B4B7BD" 
+                                  axisLine={false} 
+                                  tickLine={false} 
+                                  style={{ fontSize: '10px' }}
+                                />
+                                <YAxis hide domain={[-0.1, 1.1]} ticks={[0, 1]} />
+                                <ReferenceLine y={0} stroke="#3A3B64" strokeDasharray="3 3" />
+                                <ReferenceLine y={1} stroke="#3A3B64" strokeDasharray="3 3" />
+                                <Tooltip
+                                  contentStyle={{
+                                    backgroundColor: '#0e111a',
+                                    border: '1px solid #3B4253',
+                                    borderRadius: '4px',
+                                  }}
+                                  formatter={(value) => [value === 1 ? 'PTT ON' : 'PTT OFF', 'Status']}
+                                />
+                                <Line
+                                  type="stepAfter"
+                                  dataKey="ptt"
+                                  stroke="#00E676"
+                                  strokeWidth={3}
+                                  dot={false}
+                                  isAnimationActive={false}
+                                />
+                              </LineChart>
+                            </ResponsiveContainer>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    {/* Grafik SWR */}
+                    <div className="bg-[#0e111a] p-6 rounded-lg border border-[#3B4253]">
+                      <div className="flex justify-between items-center mb-4">
+                        <div>
+                          <h3 className="text-lg font-semibold text-white">SWR</h3>
+                          <p className="text-[#B4B7BD] text-sm">vs Frequency (SDR1=Forward, SDR2=Reflected) | Y: 1–10 </p>
+                        </div>
+                      </div>
+                      {swrData && swrData.length > 0 ? (
+                        <div className="h-[120px] flex">
+                          <div className="w-20 pr-2">
+                            <ResponsiveContainer width="100%" height="100%">
+                              <LineChart data={swrData} margin={{ top: 5, right: 0, left: 0, bottom: 5 }}>
+                                <YAxis 
+                                  stroke="#B4B7BD" 
+                                  axisLine={false} 
+                                  tickLine={false}
+                                  domain={isSdr1 ? [1, 12] : [1, 10]}
+                                  ticks={isSdr1 ? [4, 8, 12] : [1, 5, 10]}
+                                  tick={(props) => {
+                                    const { x, y, payload } = props as any;
+                                    return (
+                                      <g transform={`translate(${x},${y})`}>
+                                        <text x={0} y={0} dy={4} textAnchor="end" fill="#B4B7BD" fontSize={10}>
+                                          {payload?.value}
+                                        </text>
+                                      </g>
+                                    );
+                                  }}
+                                />
+                              </LineChart>
+                            </ResponsiveContainer>
+                          </div>
+                          <div className="flex-1 overflow-x-auto" ref={swrScrollRef}>
+                            <div style={{ width: `${swrChartWidthPx}px`, height: '100%' }}>
+                              <ResponsiveContainer width="100%" height="100%">
+                                <LineChart data={swrData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+                                  <CartesianGrid strokeDasharray="3 3" stroke="#3A3B64" vertical={false} horizontal={false} />
+                                  <XAxis 
+                                    dataKey="frequency"
+                                    type="number"
+                                    domain={swrFreqMinMax ? [swrFreqMinMax.min, swrFreqMinMax.max] : ['auto', 'auto']}
+                                    stroke="#B4B7BD" 
+                                    axisLine={false} 
+                                    tickLine={false} 
+                                    style={{ fontSize: '10px' }}
+                                    tickFormatter={(val: number) => `${(val / 1e6).toFixed(3)} MHz`}
+                                  />
+                                  <YAxis hide domain={isSdr1 ? [1, 12] : [1, 10]} ticks={isSdr1 ? [4, 8, 12] : [1, 5, 10]} />
+                                  {isSdr1 ? (
+                                    <>
+                                      <ReferenceLine y={4} stroke="#3A3B64" strokeDasharray="3 3" />
+                                      <ReferenceLine y={8} stroke="#3A3B64" strokeDasharray="3 3" />
+                                      <ReferenceLine y={12} stroke="#3A3B64" strokeDasharray="3 3" />
+                                    </>
+                                  ) : (
+                                    <>
+                                      <ReferenceLine y={1} stroke="#3A3B64" strokeDasharray="3 3" />
+                                      <ReferenceLine y={5} stroke="#3A3B64" strokeDasharray="3 3" />
+                                      <ReferenceLine y={10} stroke="#3A3B64" strokeDasharray="3 3" />
+                                    </>
+                                  )}
+                                  <Tooltip
+                                    contentStyle={{
+                                      backgroundColor: '#0e111a',
+                                      border: '1px solid #3B4253',
+                                      borderRadius: '4px',
+                                    }}
+                                    formatter={(value, _name, entry: any) => [
+                                      entry?.payload?.swrRaw > 10 ? '> 10' : (value as number).toFixed(2),
+                                      'SWR'
+                                    ]}
+                                    labelFormatter={(label) => `${(Number(label) / 1e6).toFixed(3)} MHz`}
+                                  />
+                                  <Line
+                                    type="monotone"
+                                    dataKey="swr"
+                                    stroke="#29B6F6"
+                                    strokeWidth={2}
+                                    dot={false}
+                                    isAnimationActive={false}
+                                  />
+                                </LineChart>
+                              </ResponsiveContainer>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="h-[120px] flex items-center justify-center text-[#B4B7BD] text-sm">
+                          Data SWR belum dapat dihitung dari sumber saat ini
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>

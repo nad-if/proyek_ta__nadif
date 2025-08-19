@@ -19,3 +19,31 @@ body {
   background: var(--background);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Custom Scrollbar - Dark, minimal, modern */
+/* Firefox */
+html {
+  scrollbar-width: thin;
+  scrollbar-color: #3B4253 #0e111a; /* thumb | track */
+}
+
+/* Chrome, Edge, Safari */
+::-webkit-scrollbar {
+  width: 10px;          /* vertical */
+  height: 8px;          /* horizontal */
+}
+::-webkit-scrollbar-track {
+  background: #0e111a;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb {
+  background-color: #2a2f45; /* subtle thumb */
+  border-radius: 9999px;
+  border: 2px solid #0e111a; /* creates gap for minimal look */
+}
+::-webkit-scrollbar-thumb:hover {
+  background-color: #7367F0; /* accent on hover */
+}
+::-webkit-scrollbar-corner {
+  background: #0e111a;
+}
