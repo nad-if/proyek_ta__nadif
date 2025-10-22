@@ -117,7 +117,11 @@ export default function DashboardPage() {
       fetch('/data2.json')           // diasumsikan reflected power (SDR 2)
     ])
       .then(async ([resSel, resFwd, resRef]) => {
-        if (!resSel.ok) throw new Error('Gagal fetch data utama');
+        if (!resSel.ok) {
+          console.error('Response status:', resSel.status);
+          console.error('Response text:', await resSel.text());
+          throw new Error('Gagal fetch data utama');
+        }
         if (!resFwd.ok || !resRef.ok) {
           // Jika salah satu gagal, tetap render chart utama, tapi SWR kosong
           const jsonSel = await resSel.json();
@@ -191,7 +195,10 @@ export default function DashboardPage() {
         swrList.sort((a, b) => a.frequency - b.frequency);
         setSwrData(swrList);
       })
-      .catch((err) => setError(err.message))
+      .catch((err) => {
+        console.error('Fetch error:', err);
+        setError(err.message);
+      })
       .finally(() => setLoading(false));
   }, [selectedDevice]);
 
