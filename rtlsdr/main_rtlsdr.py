@@ -1,6 +1,5 @@
 import time
 import json
-import os
 from rtlsdr import *
 from pylab import *
 import numpy as np
@@ -36,34 +35,39 @@ server_thread = threading.Thread(target=start_server, daemon=True)
 server_thread.start()
 highest = -999
 lowest = 999
+while True:
+    samples = sdr.read_samples(200000)
+    real_part = samples[100000].real # in phase
+    imag_part = samples[100000].imag # quadrature
+    magnitude = real_part**2 + imag_part**2
+    power_db = 10 * np.log10(10*magnitude)
+    power_db =
+    '''sum += power_db
+    if power_db > highest:
+        highest = power_db
+    if power_db < lowest:
+        lowest = power_db'''
 
-# Pastikan penulisan file ke folder yang sama dengan skrip ini
-script_dir = os.path.dirname(os.path.abspath(__file__))
-output_path = os.path.join(script_dir, 'data2.json')
 
-try:
-    while True:
-        samples = sdr.read_samples(200000)
-        # Hitung power berbasis rata-rata magnitude kuadrat untuk stabilitas
-        magnitude_mean = float(np.mean(np.abs(samples)**2))
-        power_db = float(10 * np.log10(max(magnitude_mean, 1e-12)))
+    current_time = datetime.now()
+    shifted_time = current_time - timedelta(hours=7)
 
-        current_time = datetime.now()
-        shifted_time = current_time - timedelta(hours=7)
 
-        data_entry = {
+    data_entry = {
             'timestamp': shifted_time.strftime('%Y/%m/%d %H:%M:%S'),
-            'power_db': power_db,
-            'frequency': float(sdr.center_freq)
-        }
-        data_list.append(data_entry)
+            'power_db' : power_db,
+            'frequency' : sdr.center_freq
+            }
+    data_list.append(data_entry)
 
-        with open(output_path, mode='w', encoding='utf-8') as file:
-            json.dump(data_list, file, indent=4)
-        print(data_entry)
+    with open('data2.json', mode='w') as file:
+        json.dump(data_list, file, indent=4)
+    print(data_entry)
 
-        time.sleep(1)
-finally:
-    sdr.close()
+    time.sleep(1)
+'''print(sum/60)
+print(highest)
+print(lowest)'''
+sdr.close()
 
             
