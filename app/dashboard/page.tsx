@@ -58,7 +58,7 @@ const newCustomerData = [
 ];
 
 // Threshold power untuk status transmit/receive (PTT on/off)
-const PTT_THRESHOLD = -20; // diubah ke -20 dB
+const PTT_THRESHOLD = -40; // diubah ke -40 dB
 // Kalibrasi perbedaan gain antara channel reflected (SDR2) terhadap forward (SDR1) dalam dB
 const REFLECTED_CAL_DB = 0; // sesuaikan jika diperlukan
 
@@ -74,6 +74,7 @@ export default function DashboardPage() {
   const powerScrollRef = useRef<HTMLDivElement>(null);
   const pttScrollRef = useRef<HTMLDivElement>(null);
   const swrScrollRef = useRef<HTMLDivElement>(null);
+  const hasLoadedRef = useRef<boolean>(false);
   const isSdr1 = selectedDevice === 'SDR 1';
 
   const swrFreqMinMax = useMemo(() => {
@@ -109,53 +110,138 @@ export default function DashboardPage() {
   useEffect(() => {
     setLoading(true);
     setError(null);
-    const fileSelected = selectedDevice === 'SDR 1' ? '/data.json' : '/data2.json';
+    hasLoadedRef.current = false; // Reset saat ganti device
+    let timer: any;
+    const fileSelectedBase = selectedDevice === 'SDR 1' ? '/data.json' : '/data2.json';
 
-    Promise.all([
-      fetch(fileSelected),           // untuk grafik power & PTT
-      fetch('/data.json'),           // diasumsikan forward power (SDR 1)
-      fetch('/data2.json')           // diasumsikan reflected power (SDR 2)
+    const doFetch = () => {
+      const ts = Date.now();
+      const selUrl = `${fileSelectedBase}?t=${ts}`;
+      const fwdUrl = `/data.json?t=${ts}`;
+      const refUrl = `/data2.json?t=${ts}`;
+      return Promise.all([
+        fetch(selUrl, { cache: 'no-store' }), // untuk grafik power & PTT
+        fetch(fwdUrl, { cache: 'no-store' }), // diasumsikan forward power (SDR 1)
+        fetch(refUrl, { cache: 'no-store' }) // diasumsikan reflected power (SDR 2)
     ])
       .then(async ([resSel, resFwd, resRef]) => {
         if (!resSel.ok) {
           console.error('Response status:', resSel.status);
-          console.error('Response text:', await resSel.text());
+          const text = await resSel.text();
+          console.error('Response text:', text);
           throw new Error('Gagal fetch data utama');
         }
+        
+        // Helper untuk parse JSON dengan error handling dan retry
+        const safeJsonParse = async (response: Response, name: string): Promise<any[]> => {
+          try {
+            const text = await response.text();
+            if (!text || text.trim() === '') {
+              console.warn(`${name} is empty, returning empty array`);
+              return [];
+            }
+            
+            // Coba parse dengan retry jika error
+            let parsed: any = null;
+            let lastError: Error | null = null;
+            
+            for (let attempt = 0; attempt < 3; attempt++) {
+              try {
+                parsed = JSON.parse(text);
+                break;
+              } catch (e: any) {
+                lastError = e;
+                // Jika error di tengah file, coba potong sampai posisi error
+                if (e.message && e.message.includes('position')) {
+                  const match = e.message.match(/position (\d+)/);
+                  if (match) {
+                    const pos = parseInt(match[1]);
+                    // Potong sampai posisi error dan coba parse lagi
+                    const truncated = text.substring(0, pos);
+                    try {
+                      parsed = JSON.parse(truncated);
+                      console.warn(`${name} truncated at position ${pos}, using partial data`);
+                      break;
+                    } catch {
+                      // Jika masih error, coba lagi dengan delay kecil
+                      if (attempt < 2) {
+                        await new Promise(resolve => setTimeout(resolve, 50));
+                        continue;
+                      }
+                    }
+                  }
+                }
+                if (attempt === 2) {
+                  throw e;
+                }
+              }
+            }
+            
+            if (parsed === null) {
+              throw lastError || new Error('Failed to parse JSON');
+            }
+            
+             return Array.isArray(parsed) ? parsed : [];
+           } catch (e: any) {
+             // Hanya log warning untuk error yang sudah di-handle, bukan error fatal
+             if (e.message && e.message.includes('position')) {
+               // JSON corrupt - sudah di-handle dengan truncate, cukup warn
+               console.warn(`JSON parsing issue for ${name} (handled gracefully)`);
+             } else {
+               // Error lain - log untuk debugging
+               console.error(`Error parsing ${name}:`, e.message || e);
+             }
+             // Return empty array instead of crashing
+             return [];
+           }
+        };
+
         if (!resFwd.ok || !resRef.ok) {
           // Jika salah satu gagal, tetap render chart utama, tapi SWR kosong
-          const jsonSel = await resSel.json();
-          const mappedSel = jsonSel.map((item: any) => ({
-            timestamp: item.timestamp.split(' ')[1],
-            power: item.power_db
-          }));
-          setChartData(mappedSel);
-          const mappedPTT = mappedSel.map((item: any) => ({
-            timestamp: item.timestamp,
-            ptt: item.power > PTT_THRESHOLD ? 1 : 0
-          }));
-          setPttData(mappedPTT);
-          setSwrData([]);
+          const jsonSel = await safeJsonParse(resSel, 'selected');
+          // Hanya update jika ada data baru yang valid, jangan reset ke empty
+          if (jsonSel.length > 0) {
+            const mappedSel = jsonSel.map((item: any) => ({
+              timestamp: item.timestamp?.split(' ')[1] || '',
+              power: item.power_db || 0
+            }));
+            setChartData(mappedSel);
+            const mappedPTT = mappedSel.map((item: any) => ({
+              timestamp: item.timestamp,
+              ptt: item.power > PTT_THRESHOLD ? 1 : 0
+            }));
+            setPttData(mappedPTT);
+          }
+          // Jangan reset swrData, biarkan data terakhir tetap ada
           return;
         }
 
         const [jsonSel, jsonFwd, jsonRef] = await Promise.all([
-          resSel.json(),
-          resFwd.json(),
-          resRef.json()
+          safeJsonParse(resSel, 'selected'),
+          safeJsonParse(resFwd, 'forward'),
+          safeJsonParse(resRef, 'reflected')
         ]);
 
         // Mapping untuk grafik power & PTT (berdasarkan device yang dipilih)
-        const mappedSel = jsonSel.map((item: any) => ({
-          timestamp: item.timestamp.split(' ')[1],
-          power: item.power_db
-        }));
-        setChartData(mappedSel);
-        const mappedPTT = mappedSel.map((item: any) => ({
-          timestamp: item.timestamp,
-          ptt: item.power > PTT_THRESHOLD ? 1 : 0
-        }));
-        setPttData(mappedPTT);
+        // Hanya update jika ada data baru yang valid, jangan reset ke empty
+        if (jsonSel.length > 0) {
+          const mappedSel = jsonSel
+            .filter((item: any) => item && item.timestamp && typeof item.power_db === 'number')
+            .map((item: any) => ({
+              timestamp: item.timestamp.split(' ')[1] || item.timestamp,
+              power: item.power_db
+            }));
+          
+          // Hanya update jika ada data valid
+          if (mappedSel.length > 0) {
+            setChartData(mappedSel);
+            const mappedPTT = mappedSel.map((item: any) => ({
+              timestamp: item.timestamp,
+              ptt: item.power > PTT_THRESHOLD ? 1 : 0
+            }));
+            setPttData(mappedPTT);
+          }
+        }
 
         // Pilih sampel terbaru per frekuensi untuk forward (SDR1) dan reflected (SDR2)
         const forwardLatest = new Map<number, { powerDb: number, timestamp: string }>();
@@ -176,30 +262,54 @@ export default function DashboardPage() {
         }
 
         // Hitung satu nilai SWR per frekuensi berdasarkan sampel terbaru
-        const swrList: { frequency: number, swr: number, swrRaw: number }[] = [];
-        for (const [freq, fwd] of forwardLatest.entries()) {
-          const ref = reflectedLatest.get(freq);
-          if (!ref) continue;
-          const pfDb = fwd.powerDb;
-          const prDb = ref.powerDb + REFLECTED_CAL_DB;
-          const ratioLin = Math.pow(10, (prDb - pfDb) / 10);
-          const gammaMag = Math.sqrt(Math.max(0, ratioLin));
-          const gammaClamped = Math.min(gammaMag, 0.9999);
-          const swrRaw = (1 + gammaClamped) / (1 - gammaClamped);
-          const swr = Math.max(1, Math.min(10, swrRaw));
-          if (Number.isFinite(swrRaw)) {
-            swrList.push({ frequency: freq, swr, swrRaw });
+        // Hanya update jika ada data valid, jangan reset ke empty
+        if (jsonFwd.length > 0 && jsonRef.length > 0) {
+          const swrList: { frequency: number, swr: number, swrRaw: number }[] = [];
+          for (const [freq, fwd] of forwardLatest.entries()) {
+            const ref = reflectedLatest.get(freq);
+            if (!ref) continue;
+            const pfDb = fwd.powerDb;
+            const prDb = ref.powerDb + REFLECTED_CAL_DB;
+            const ratioLin = Math.pow(10, (prDb - pfDb) / 10);
+            const gammaMag = Math.sqrt(Math.max(0, ratioLin));
+            const gammaClamped = Math.min(gammaMag, 0.9999);
+            const swrRaw = (1 + gammaClamped) / (1 - gammaClamped);
+            const swr = Math.max(1, Math.min(10, swrRaw));
+            if (Number.isFinite(swrRaw)) {
+              swrList.push({ frequency: freq, swr, swrRaw });
+            }
+          }
+          // Urutkan berdasarkan frequency
+          swrList.sort((a, b) => a.frequency - b.frequency);
+          // Hanya update jika ada data valid
+          if (swrList.length > 0) {
+            setSwrData(swrList);
           }
         }
-        // Urutkan berdasarkan frequency
-        swrList.sort((a, b) => a.frequency - b.frequency);
-        setSwrData(swrList);
       })
       .catch((err) => {
         console.error('Fetch error:', err);
-        setError(err.message);
+        // Jangan set error yang akan reset UI, cukup log saja
+        // setError(err.message);
+        // Data terakhir tetap ditampilkan, tidak di-reset
       })
-      .finally(() => setLoading(false));
+      .finally(() => {
+        // Hanya set loading false setelah pertama kali fetch berhasil
+        if (!hasLoadedRef.current) {
+          hasLoadedRef.current = true;
+          setLoading(false);
+        }
+      });
+    }
+
+    // fetch awal
+    doFetch();
+    // polling tiap 2 detik untuk update yang lebih responsif
+    timer = setInterval(doFetch, 2000);
+
+    return () => {
+      if (timer) clearInterval(timer);
+    };
   }, [selectedDevice]);
 
   return (
