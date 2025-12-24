@@ -121,7 +121,7 @@ Setelah semua berjalan:
 
 ### Cek Frontend:
 - Browser menampilkan dashboard dengan grafik
-- Grafik power, PTT, dan SWR terupdate setiap 2 detik
+- Grafik power, PTT, dan Return Loss terupdate setiap 2 detik
 
 ## ⚠️ Troubleshooting
 

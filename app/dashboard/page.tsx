@@ -19,9 +19,6 @@ import {
   Bar
 } from 'recharts';
 import { useState, useRef, useEffect, useMemo } from 'react';
-import { DEVICE_IDS } from '../data/deviceIds';
-
-type DeviceName = keyof typeof DEVICE_IDS;
 
 // SDR Data
 const sdrData = [
@@ -63,42 +60,110 @@ const PTT_THRESHOLD = -40; // diubah ke -40 dB
 const REFLECTED_CAL_DB = 0; // sesuaikan jika diperlukan
 
 export default function DashboardPage() {
-  const [selectedDevice, setSelectedDevice] = useState<DeviceName>('SDR 1');
   const [chartData, setChartData] = useState<{ timestamp: string, power: number }[]>([]);
+  const [combinedChartData, setCombinedChartData] = useState<{ timestamp: string, sdr1: number | null, sdr2: number | null }[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [pttData, setPttData] = useState<{ timestamp: string, ptt: number }[]>([]);
-  const [swrData, setSwrData] = useState<{ frequency: number, swr: number, swrRaw: number }[]>([]);
+  const [returnLossData, setReturnLossData] = useState<{ timestamp: string, returnLoss: number }[]>([]);
   const powerScrollRef = useRef<HTMLDivElement>(null);
   const pttScrollRef = useRef<HTMLDivElement>(null);
-  const swrScrollRef = useRef<HTMLDivElement>(null);
+  const returnLossScrollRef = useRef<HTMLDivElement>(null);
   const hasLoadedRef = useRef<boolean>(false);
-  const isSdr1 = selectedDevice === 'SDR 1';
 
-  const swrFreqMinMax = useMemo(() => {
-    if (!swrData || swrData.length === 0) return null as null | { min: number; max: number };
-    let min = Number.POSITIVE_INFINITY;
-    let max = Number.NEGATIVE_INFINITY;
-    for (const d of swrData) {
-      if (d.frequency < min) min = d.frequency;
-      if (d.frequency > max) max = d.frequency;
+  // Handle click outside untuk profile dropdown
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setDropdownOpen(false);
+      }
     }
-    return { min, max };
-  }, [swrData]);
+    if (dropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    } else {
+      document.removeEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [dropdownOpen]);
 
   // Lebar chart dinamis untuk memungkinkan horizontal scroll
-  const swrChartWidthPx = useMemo(() => {
-    const n = swrData?.length ?? 0;
-    // 12 px per titik, minimal 800 px agar tetap terbaca
+  const returnLossChartWidthPx = useMemo(() => {
+    const n = returnLossData?.length ?? 0;
     return Math.max(800, n * 12);
-  }, [swrData]);
+  }, [returnLossData]);
+
+  // Hitung min/max Return Loss dari data aktual untuk domain Y-axis yang dinamis
+  const returnLossDomain = useMemo(() => {
+    if (!returnLossData || returnLossData.length === 0) return [-10, 0] as [number, number];
+    let min = Number.POSITIVE_INFINITY;
+    let max = Number.NEGATIVE_INFINITY;
+    for (const d of returnLossData) {
+      if (d.returnLoss < min) min = d.returnLoss;
+      if (d.returnLoss > max) max = d.returnLoss;
+    }
+    // Tambahkan padding 10% di atas dan bawah
+    const padding = Math.max(2, (max - min) * 0.1);
+    let minVal = Math.floor(min - padding);
+    let maxVal = Math.ceil(max + padding);
+    
+    // Return Loss HARUS selalu negatif atau 0, jadi maxVal tidak boleh lebih dari 0
+    maxVal = Math.min(0, maxVal);
+    
+    // Pastikan domain selalu mencakup -10 jika min <= -5
+    if (min <= -5) {
+      minVal = Math.min(minVal, -10);
+    }
+    
+    // Pastikan domain masuk akal (tidak terlalu ekstrem)
+    return [Math.max(-20, minVal), maxVal] as [number, number];
+  }, [returnLossData]);
+
+  // Generate ticks berdasarkan domain
+  const returnLossTicks = useMemo(() => {
+    const [min, max] = returnLossDomain;
+    // Untuk Return Loss, gunakan step 5 untuk menghasilkan 0, -5, -10, dll
+    const step = 5;
+    const ticks: number[] = [];
+    // Mulai dari nilai yang dibulatkan ke bawah ke kelipatan step
+    const startTick = Math.floor(min / step) * step;
+    // Akhiri di nilai yang dibulatkan ke atas ke kelipatan step, tapi maksimal 0
+    const endTick = Math.min(0, Math.ceil(max / step) * step);
+    
+    for (let i = startTick; i <= endTick; i += step) {
+      // Hanya tambahkan ticks yang <= 0 (Return Loss tidak boleh positif)
+      if (i <= 0) {
+        ticks.push(i);
+      }
+    }
+    
+    // Pastikan 0 selalu ada jika dalam range
+    if (min <= 0 && max >= 0 && !ticks.includes(0)) {
+      ticks.push(0);
+    }
+    
+    // Pastikan -10 selalu ada jika min <= -10
+    if (min <= -10 && !ticks.includes(-10)) {
+      ticks.push(-10);
+    }
+    
+    // Pastikan -5 selalu ada jika min <= -5
+    if (min <= -5 && !ticks.includes(-5)) {
+      ticks.push(-5);
+    }
+    
+    // Urutkan ticks dan filter hanya yang <= 0
+    ticks.sort((a, b) => a - b);
+    return ticks.filter(tick => tick <= 0);
+  }, [returnLossDomain]);
 
   const timeChartWidthPx = useMemo(() => {
-    const n = chartData?.length ?? 0;
+    const n = combinedChartData?.length ?? chartData?.length ?? 0;
     return Math.max(800, n * 12);
-  }, [chartData]);
+  }, [combinedChartData, chartData]);
 
   const pttChartWidthPx = useMemo(() => {
     const n = pttData?.length ?? 0;
@@ -110,30 +175,26 @@ export default function DashboardPage() {
   useEffect(() => {
     setLoading(true);
     setError(null);
-    hasLoadedRef.current = false; // Reset saat ganti device
+    hasLoadedRef.current = false;
     let timer: any;
-    const fileSelectedBase = selectedDevice === 'SDR 1' ? '/data.json' : '/data2.json';
 
     const doFetch = () => {
       const ts = Date.now();
-      const selUrl = `${fileSelectedBase}?t=${ts}`;
-      const fwdUrl = `/data.json?t=${ts}`;
-      const refUrl = `/data2.json?t=${ts}`;
-      return Promise.all([
-        fetch(selUrl, { cache: 'no-store' }), // untuk grafik power & PTT
+      const fwdUrl = `/data_dummy.json?t=${ts}`; // forward power (SDR 1)
+      const refUrl = `/data2_dummy.json?t=${ts}`; // reflected power (SDR 2)
+      return Promise.allSettled([
         fetch(fwdUrl, { cache: 'no-store' }), // diasumsikan forward power (SDR 1)
         fetch(refUrl, { cache: 'no-store' }) // diasumsikan reflected power (SDR 2)
     ])
-      .then(async ([resSel, resFwd, resRef]) => {
-        if (!resSel.ok) {
-          console.error('Response status:', resSel.status);
-          const text = await resSel.text();
-          console.error('Response text:', text);
-          throw new Error('Gagal fetch data utama');
-        }
+      .then(async (results) => {
+        const [resFwdResult, resRefResult] = results;
         
         // Helper untuk parse JSON dengan error handling dan retry
-        const safeJsonParse = async (response: Response, name: string): Promise<any[]> => {
+        const safeJsonParse = async (response: Response | null, name: string): Promise<any[]> => {
+          if (!response || !response.ok) {
+            console.warn(`${name} fetch failed or response not ok`);
+            return [];
+          }
           try {
             const text = await response.text();
             if (!text || text.trim() === '') {
@@ -196,36 +257,16 @@ export default function DashboardPage() {
            }
         };
 
-        if (!resFwd.ok || !resRef.ok) {
-          // Jika salah satu gagal, tetap render chart utama, tapi SWR kosong
-          const jsonSel = await safeJsonParse(resSel, 'selected');
-          // Hanya update jika ada data baru yang valid, jangan reset ke empty
-          if (jsonSel.length > 0) {
-            const mappedSel = jsonSel.map((item: any) => ({
-              timestamp: item.timestamp?.split(' ')[1] || '',
-              power: item.power_db || 0
-            }));
-            setChartData(mappedSel);
-            const mappedPTT = mappedSel.map((item: any) => ({
-              timestamp: item.timestamp,
-              ptt: item.power > PTT_THRESHOLD ? 1 : 0
-            }));
-            setPttData(mappedPTT);
-          }
-          // Jangan reset swrData, biarkan data terakhir tetap ada
-          return;
-        }
+        // Parse semua data, bahkan jika salah satu gagal
+        const resFwd = resFwdResult.status === 'fulfilled' ? resFwdResult.value : null;
+        const resRef = resRefResult.status === 'fulfilled' ? resRefResult.value : null;
+        
+        const jsonFwd = await safeJsonParse(resFwd, 'forward');
+        const jsonRef = await safeJsonParse(resRef, 'reflected');
 
-        const [jsonSel, jsonFwd, jsonRef] = await Promise.all([
-          safeJsonParse(resSel, 'selected'),
-          safeJsonParse(resFwd, 'forward'),
-          safeJsonParse(resRef, 'reflected')
-        ]);
-
-        // Mapping untuk grafik power & PTT (berdasarkan device yang dipilih)
-        // Hanya update jika ada data baru yang valid, jangan reset ke empty
-        if (jsonSel.length > 0) {
-          const mappedSel = jsonSel
+        // Mapping untuk grafik power & PTT menggunakan data SDR 1 (forward)
+        if (jsonFwd.length > 0) {
+          const mappedFwd = jsonFwd
             .filter((item: any) => item && item.timestamp && typeof item.power_db === 'number')
             .map((item: any) => ({
               timestamp: item.timestamp.split(' ')[1] || item.timestamp,
@@ -233,9 +274,9 @@ export default function DashboardPage() {
             }));
           
           // Hanya update jika ada data valid
-          if (mappedSel.length > 0) {
-            setChartData(mappedSel);
-            const mappedPTT = mappedSel.map((item: any) => ({
+          if (mappedFwd.length > 0) {
+            setChartData(mappedFwd);
+            const mappedPTT = mappedFwd.map((item: any) => ({
               timestamp: item.timestamp,
               ptt: item.power > PTT_THRESHOLD ? 1 : 0
             }));
@@ -243,47 +284,125 @@ export default function DashboardPage() {
           }
         }
 
-        // Pilih sampel terbaru per frekuensi untuk forward (SDR1) dan reflected (SDR2)
-        const forwardLatest = new Map<number, { powerDb: number, timestamp: string }>();
-        for (const it of jsonFwd) {
-          if (typeof it.frequency !== 'number' || typeof it.power_db !== 'number' || typeof it.timestamp !== 'string') continue;
-          const prev = forwardLatest.get(it.frequency);
-          if (!prev || it.timestamp > prev.timestamp) {
-            forwardLatest.set(it.frequency, { powerDb: it.power_db, timestamp: it.timestamp });
+        // Gabungkan data SDR 1 dan SDR 2 untuk grafik gabungan
+        if (jsonFwd.length > 0 || jsonRef.length > 0) {
+          // Buat map untuk mengelompokkan data per timestamp
+          const sdr1ByTimestamp = new Map<string, { powerDb: number, timestamp: string }>();
+          const sdr2ByTimestamp = new Map<string, { powerDb: number, timestamp: string }>();
+          
+          // Ambil data terbaru per timestamp untuk SDR 1 (forward)
+          for (const it of jsonFwd) {
+            if (typeof it.power_db !== 'number' || typeof it.timestamp !== 'string') continue;
+            const timeKey = it.timestamp.split(' ')[1] || it.timestamp;
+            const prev = sdr1ByTimestamp.get(timeKey);
+            if (!prev || it.timestamp > prev.timestamp) {
+              sdr1ByTimestamp.set(timeKey, { powerDb: it.power_db, timestamp: timeKey });
+            }
           }
-        }
-        const reflectedLatest = new Map<number, { powerDb: number, timestamp: string }>();
-        for (const it of jsonRef) {
-          if (typeof it.frequency !== 'number' || typeof it.power_db !== 'number' || typeof it.timestamp !== 'string') continue;
-          const prev = reflectedLatest.get(it.frequency);
-          if (!prev || it.timestamp > prev.timestamp) {
-            reflectedLatest.set(it.frequency, { powerDb: it.power_db, timestamp: it.timestamp });
+          
+          // Ambil data terbaru per timestamp untuk SDR 2 (reflected)
+          for (const it of jsonRef) {
+            if (typeof it.power_db !== 'number' || typeof it.timestamp !== 'string') continue;
+            const timeKey = it.timestamp.split(' ')[1] || it.timestamp;
+            const prev = sdr2ByTimestamp.get(timeKey);
+            if (!prev || it.timestamp > prev.timestamp) {
+              sdr2ByTimestamp.set(timeKey, { powerDb: it.power_db, timestamp: timeKey });
+            }
+          }
+          
+          // Gabungkan data untuk setiap timestamp yang ada
+          const combinedList: { timestamp: string, sdr1: number | null, sdr2: number | null }[] = [];
+          const allTimestamps = new Set([...sdr1ByTimestamp.keys(), ...sdr2ByTimestamp.keys()]);
+          
+          for (const timeKey of allTimestamps) {
+            const sdr1 = sdr1ByTimestamp.get(timeKey);
+            const sdr2 = sdr2ByTimestamp.get(timeKey);
+            if (sdr1 || sdr2) {
+              combinedList.push({
+                timestamp: timeKey,
+                sdr1: sdr1?.powerDb ?? null,
+                sdr2: sdr2?.powerDb ?? null
+              });
+            }
+          }
+          
+          // Urutkan berdasarkan timestamp
+          combinedList.sort((a, b) => a.timestamp.localeCompare(b.timestamp));
+          
+          // Hanya update jika ada data valid
+          if (combinedList.length > 0) {
+            setCombinedChartData(combinedList);
           }
         }
 
-        // Hitung satu nilai SWR per frekuensi berdasarkan sampel terbaru
-        // Hanya update jika ada data valid, jangan reset ke empty
+        // Hitung Return Loss per timestamp dari forward (SDR1) dan reflected (SDR2)
+        // Return Loss (dB) = Forward Power (dB) - Reflected Power (dB)
         if (jsonFwd.length > 0 && jsonRef.length > 0) {
-          const swrList: { frequency: number, swr: number, swrRaw: number }[] = [];
-          for (const [freq, fwd] of forwardLatest.entries()) {
-            const ref = reflectedLatest.get(freq);
-            if (!ref) continue;
-            const pfDb = fwd.powerDb;
-            const prDb = ref.powerDb + REFLECTED_CAL_DB;
-            const ratioLin = Math.pow(10, (prDb - pfDb) / 10);
-            const gammaMag = Math.sqrt(Math.max(0, ratioLin));
-            const gammaClamped = Math.min(gammaMag, 0.9999);
-            const swrRaw = (1 + gammaClamped) / (1 - gammaClamped);
-            const swr = Math.max(1, Math.min(10, swrRaw));
-            if (Number.isFinite(swrRaw)) {
-              swrList.push({ frequency: freq, swr, swrRaw });
+          // Buat map untuk mengelompokkan data per timestamp
+          const forwardByTimestamp = new Map<string, { powerDb: number, timestamp: string }>();
+          const reflectedByTimestamp = new Map<string, { powerDb: number, timestamp: string }>();
+          
+          // Ambil data terbaru per timestamp untuk forward
+          for (const it of jsonFwd) {
+            if (typeof it.power_db !== 'number' || typeof it.timestamp !== 'string') continue;
+            const timeKey = it.timestamp.split(' ')[1] || it.timestamp; // Ambil hanya waktu (HH:MM:SS)
+            const prev = forwardByTimestamp.get(timeKey);
+            if (!prev || it.timestamp > prev.timestamp) {
+              forwardByTimestamp.set(timeKey, { powerDb: it.power_db, timestamp: timeKey });
             }
           }
-          // Urutkan berdasarkan frequency
-          swrList.sort((a, b) => a.frequency - b.frequency);
+          
+          // Ambil data terbaru per timestamp untuk reflected
+          for (const it of jsonRef) {
+            if (typeof it.power_db !== 'number' || typeof it.timestamp !== 'string') continue;
+            const timeKey = it.timestamp.split(' ')[1] || it.timestamp; // Ambil hanya waktu (HH:MM:SS)
+            const prev = reflectedByTimestamp.get(timeKey);
+            if (!prev || it.timestamp > prev.timestamp) {
+              reflectedByTimestamp.set(timeKey, { powerDb: it.power_db, timestamp: timeKey });
+            }
+          }
+          
+          // Hitung Return Loss untuk setiap timestamp yang ada di kedua data
+          const returnLossList: { timestamp: string, returnLoss: number }[] = [];
+          const allTimestamps = new Set([...forwardByTimestamp.keys(), ...reflectedByTimestamp.keys()]);
+          
+          for (const timeKey of allTimestamps) {
+            const fwd = forwardByTimestamp.get(timeKey);
+            const ref = reflectedByTimestamp.get(timeKey);
+            if (fwd && ref) {
+              // Return Loss (dB) = Reflected_dB - Forward_dB
+              // Return Loss seharusnya selalu negatif karena Forward Power > Reflected Power
+              // Semakin negatif (semakin besar nilai absolutnya) semakin baik (lebih sedikit power yang direfleksikan)
+              const adjustedRef = ref.powerDb + REFLECTED_CAL_DB;
+              
+              // Hitung Return Loss
+              let returnLoss = adjustedRef - fwd.powerDb;
+              
+              // Return Loss HARUS selalu negatif
+              // Jika hasilnya positif, berarti ada masalah (data tertukar atau kalibrasi salah)
+              // Untuk memastikan Return Loss selalu negatif, kita ambil nilai negatif dari absolutnya
+              if (returnLoss > 0) {
+                // Jika positif, kemungkinan data tertukar - balik rumusnya
+                returnLoss = fwd.powerDb - adjustedRef;
+              }
+              
+              // Pastikan hasilnya negatif (jika masih positif, paksa menjadi negatif)
+              if (returnLoss > 0) {
+                returnLoss = -Math.abs(returnLoss);
+              }
+              
+              if (Number.isFinite(returnLoss) && returnLoss <= 0) {
+                returnLossList.push({ timestamp: timeKey, returnLoss });
+              }
+            }
+          }
+          
+          // Urutkan berdasarkan timestamp
+          returnLossList.sort((a, b) => a.timestamp.localeCompare(b.timestamp));
+          
           // Hanya update jika ada data valid
-          if (swrList.length > 0) {
-            setSwrData(swrList);
+          if (returnLossList.length > 0) {
+            setReturnLossData(returnLossList);
           }
         }
       })
@@ -310,7 +429,7 @@ export default function DashboardPage() {
     return () => {
       if (timer) clearInterval(timer);
     };
-  }, [selectedDevice]);
+  }, []);
 
   return (
     <div className="flex flex-col h-screen bg-[#0e111a]">
@@ -373,15 +492,24 @@ export default function DashboardPage() {
         {/* Main Content */}
         <main className="flex-1 flex flex-col overflow-hidden">
           {/* Page Content */}
-          <div className="flex-1 overflow-auto p-6">
-            <div className="space-y-6">
+          <div className="flex-1 overflow-auto p-4">
+            <div className="space-y-4">
               {/* Page Title */}
-              <div>
-                <h1 className="mb-2 text-[27px] font-bold text-[#EFF2F6]" style={{ fontFamily: 'Nunito Sans, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif' }}>
-                  Monitoring Dashboard
-                </h1>
-                {/* Dropdown Select Device */}
-                <DeviceDropdown selected={selectedDevice} onSelect={(val) => setSelectedDevice(val)} />
+              <div className="relative">
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="relative">
+                    <div className="absolute inset-0 bg-gradient-to-r from-[#7367F0] to-[#29B6F6] opacity-20 blur-lg rounded-md"></div>
+                    <div className="relative bg-gradient-to-r from-[#7367F0] to-[#29B6F6] p-1.5 rounded-md">
+                      <FiActivity className="w-4 h-4 text-white" />
+                    </div>
+                  </div>
+                  <div>
+                    <h1 className="text-lg font-bold bg-gradient-to-r from-[#EFF2F6] via-[#B4B7BD] to-[#EFF2F6] bg-clip-text text-transparent" style={{ fontFamily: 'Nunito Sans, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif' }}>
+                      Monitoring Dashboard
+                    </h1>
+                    <p className="text-xs text-[#B4B7BD] mt-0">Real-time monitoring dan analisis data SDR 1 & SDR 2</p>
+                  </div>
+                </div>
               </div>
               {/* Stats Cards */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -396,20 +524,29 @@ export default function DashboardPage() {
                   <div className="bg-[#0e111a] p-6 rounded-lg border border-[#3B4253]">
                     <div className="flex justify-between items-center mb-6">
                       <div>
-                        <h3 className="text-lg font-semibold text-white">{selectedDevice}</h3>
+                        <h3 className="text-lg font-semibold text-white">SDR 1 & SDR 2 Power (dB)</h3>
                         <p className="text-[#B4B7BD] text-sm">Power (dB)</p>
                       </div>
                       <div className="flex items-center justify-end space-x-4">
-                        <div className="flex items-center">
-                          <div className="w-3 h-3 bg-[#7367F0] rounded-full mr-2"></div>
-                          <span className="text-white text-sm">Power (dB)</span>
+                        <div className="flex items-center space-x-4">
+                          <div className="flex items-center">
+                            <div className="w-3 h-3 bg-[#7367F0] rounded-full mr-2"></div>
+                            <span className="text-white text-sm">SDR 1</span>
+                          </div>
+                          <div className="flex items-center">
+                            <div className="w-3 h-3 bg-[#29B6F6] rounded-full mr-2"></div>
+                            <span className="text-white text-sm">SDR 2</span>
+                          </div>
                         </div>
                       </div>
                     </div>
                     <div className="h-[250px] overflow-x-auto" ref={powerScrollRef}>
                       <div className="min-w-full" style={{ width: `${timeChartWidthPx}px`, height: '100%' }}>
                         <ResponsiveContainer width="100%" height="100%">
-                          <LineChart data={chartData} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
+                          <LineChart 
+                            data={combinedChartData.length > 0 ? combinedChartData : chartData.map(item => ({ timestamp: item.timestamp, sdr1: item.power, sdr2: null }))} 
+                            margin={{ top: 5, right: 20, left: 10, bottom: 5 }}
+                          >
                           <CartesianGrid strokeDasharray="3 3" stroke="#3A3B64" vertical={false} />
                           <XAxis 
                             dataKey="timestamp" 
@@ -466,16 +603,32 @@ export default function DashboardPage() {
                               border: '1px solid #3B4253',
                               borderRadius: '4px',
                             }}
-                            formatter={(value) => [`${value} dB`, 'Power']}
+                            formatter={(value: any, name: string) => {
+                              if (value === null || value === undefined) return [null, name];
+                              return [`${value} dB`, name === 'sdr1' ? 'SDR 1' : name === 'sdr2' ? 'SDR 2' : 'Power'];
+                            }}
                           />
                           <Line
                             type="monotone"
-                            dataKey="power"
+                            dataKey="sdr1"
                             stroke="#7367F0"
                             strokeWidth={2}
                             dot={{ stroke: '#7367F0', strokeWidth: 2, r: 4 }}
                             activeDot={{ r: 6, stroke: '#7367F0', strokeWidth: 2 }}
                             isAnimationActive={false}
+                            connectNulls={false}
+                            name="SDR 1"
+                          />
+                          <Line
+                            type="monotone"
+                            dataKey="sdr2"
+                            stroke="#29B6F6"
+                            strokeWidth={2}
+                            dot={{ stroke: '#29B6F6', strokeWidth: 2, r: 4 }}
+                            activeDot={{ r: 6, stroke: '#29B6F6', strokeWidth: 2 }}
+                            isAnimationActive={false}
+                            connectNulls={false}
+                            name="SDR 2"
                           />
                           <ReferenceLine
                             y={0}
@@ -492,7 +645,7 @@ export default function DashboardPage() {
                       </div>
                     </div>
                   </div>
-                  {/* Row: PTT dan SWR side-by-side */}
+                  {/* Row: PTT dan Return Loss side-by-side */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Grafik PTT (Transmit/Receive) */}
                     <div className="bg-[#0e111a] p-6 rounded-lg border border-[#3B4253]">
@@ -566,87 +719,126 @@ export default function DashboardPage() {
                         </div>
                       </div>
                     </div>
-                    {/* Grafik SWR */}
+                    {/* Grafik Return Loss */}
                     <div className="bg-[#0e111a] p-6 rounded-lg border border-[#3B4253]">
                       <div className="flex justify-between items-center mb-4">
                         <div>
-                          <h3 className="text-lg font-semibold text-white">SWR</h3>
-                          <p className="text-[#B4B7BD] text-sm">vs Frequency (SDR1=Forward, SDR2=Reflected) | Y: 1–10 </p>
+                          <h3 className="text-lg font-semibold text-white">Return Loss</h3>
+                          <p className="text-[#B4B7BD] text-sm">vs Waktu (SDR1=Forward, SDR2=Reflected) | Y: Return Loss (dB)</p>
                         </div>
                       </div>
-                      {swrData && swrData.length > 0 ? (
+                      {returnLossData && returnLossData.length > 0 ? (
                         <div className="h-[120px] flex">
                           <div className="w-20 pr-2">
                             <ResponsiveContainer width="100%" height="100%">
-                              <LineChart data={swrData} margin={{ top: 5, right: 0, left: 0, bottom: 5 }}>
+                              <LineChart data={returnLossData} margin={{ top: 5, right: 0, left: 0, bottom: 5 }}>
                                 <YAxis 
                                   stroke="#B4B7BD" 
                                   axisLine={false} 
                                   tickLine={false}
-                                  domain={isSdr1 ? [1, 12] : [1, 10]}
-                                  ticks={isSdr1 ? [4, 8, 12] : [1, 5, 10]}
+                                  domain={returnLossDomain}
+                                  ticks={returnLossTicks}
+                                  allowDataOverflow={false}
                                   tick={(props) => {
                                     const { x, y, payload } = props as any;
+                                    const value = payload?.value;
+                                    // Angka 0 ditampilkan dengan style khusus (bold, putih) seperti di grafik Power
+                                    if (value === 0) {
+                                      return (
+                                        <g transform={`translate(${x},${y})`}>
+                                          <text 
+                                            x={0} 
+                                            y={0} 
+                                            dy={-4} 
+                                            textAnchor="end" 
+                                            fill="#FFFFFF" 
+                                            fontSize={12}
+                                            fontWeight="bold"
+                                          >
+                                            {value}
+                                          </text>
+                                        </g>
+                                      );
+                                    }
+                                    // Untuk angka negatif seperti -5, -10
+                                    // -5 diganti labelnya jadi -10 dan diturunkan sampai sejajar dengan baris bawah
+                                    // -10 diturunkan sampai sejajar dengan baris paling bawah
+                                    let dyValue = -4;
+                                    let displayValue = value;
+                                    if (value === -5) {
+                                      displayValue = -10; // Ganti label -5 jadi -10
+                                      dyValue = 3; // Turunkan lebih banyak
+                                    } else if (value === -10) {
+                                      dyValue = 4; // Turunkan -10 sampai sejajar dengan garis horizontal paling bawah
+                                    }
                                     return (
                                       <g transform={`translate(${x},${y})`}>
-                                        <text x={0} y={0} dy={4} textAnchor="end" fill="#B4B7BD" fontSize={10}>
-                                          {payload?.value}
+                                        <text 
+                                          x={0} 
+                                          y={0} 
+                                          dy={dyValue} 
+                                          textAnchor="end" 
+                                          fill="#B4B7BD" 
+                                          fontSize={10}
+                                        >
+                                          {displayValue}
                                         </text>
                                       </g>
                                     );
                                   }}
                                 />
+                                <XAxis dataKey="timestamp" tick={false} axisLine={false} height={0} />
                               </LineChart>
                             </ResponsiveContainer>
                           </div>
-                          <div className="flex-1 overflow-x-auto" ref={swrScrollRef}>
-                            <div style={{ width: `${swrChartWidthPx}px`, height: '100%' }}>
+                          <div className="flex-1 overflow-x-auto" ref={returnLossScrollRef}>
+                            <div style={{ width: `${returnLossChartWidthPx}px`, height: '100%' }}>
                               <ResponsiveContainer width="100%" height="100%">
-                                <LineChart data={swrData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+                                <LineChart data={returnLossData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
                                   <CartesianGrid strokeDasharray="3 3" stroke="#3A3B64" vertical={false} horizontal={false} />
                                   <XAxis 
-                                    dataKey="frequency"
-                                    type="number"
-                                    domain={swrFreqMinMax ? [swrFreqMinMax.min, swrFreqMinMax.max] : ['auto', 'auto']}
+                                    dataKey="timestamp"
                                     stroke="#B4B7BD" 
                                     axisLine={false} 
                                     tickLine={false} 
                                     style={{ fontSize: '10px' }}
-                                    tickFormatter={(val: number) => `${(val / 1e6).toFixed(3)} MHz`}
+                                    interval="preserveStartEnd"
                                   />
-                                  <YAxis hide domain={isSdr1 ? [1, 12] : [1, 10]} ticks={isSdr1 ? [4, 8, 12] : [1, 5, 10]} />
-                                  {isSdr1 ? (
-                                    <>
-                                      <ReferenceLine y={4} stroke="#3A3B64" strokeDasharray="3 3" />
-                                      <ReferenceLine y={8} stroke="#3A3B64" strokeDasharray="3 3" />
-                                      <ReferenceLine y={12} stroke="#3A3B64" strokeDasharray="3 3" />
-                                    </>
-                                  ) : (
-                                    <>
-                                      <ReferenceLine y={1} stroke="#3A3B64" strokeDasharray="3 3" />
-                                      <ReferenceLine y={5} stroke="#3A3B64" strokeDasharray="3 3" />
-                                      <ReferenceLine y={10} stroke="#3A3B64" strokeDasharray="3 3" />
-                                    </>
-                                  )}
+                                  <YAxis 
+                                    width={0}
+                                    domain={returnLossDomain} 
+                                    ticks={returnLossTicks}
+                                    allowDataOverflow={false}
+                                  />
+                                  {returnLossTicks.map((tick) => (
+                                    <ReferenceLine 
+                                      key={tick} 
+                                      y={tick} 
+                                      stroke="#3A3B64" 
+                                      strokeDasharray="3 3"
+                                      strokeWidth={1}
+                                    />
+                                  ))}
                                   <Tooltip
                                     contentStyle={{
                                       backgroundColor: '#0e111a',
                                       border: '1px solid #3B4253',
                                       borderRadius: '4px',
                                     }}
-                                    formatter={(value, _name, entry: any) => [
-                                      entry?.payload?.swrRaw > 10 ? '> 10' : (value as number).toFixed(2),
-                                      'SWR'
-                                    ]}
-                                    labelFormatter={(label) => `${(Number(label) / 1e6).toFixed(3)} MHz`}
+                                    formatter={(value) => {
+                                      const val = value as number;
+                                      return [`${val.toFixed(2)} dB`, 'Return Loss'];
+                                    }}
+                                    labelFormatter={(label) => `Waktu: ${label}`}
                                   />
                                   <Line
                                     type="monotone"
-                                    dataKey="swr"
+                                    dataKey="returnLoss"
                                     stroke="#29B6F6"
                                     strokeWidth={2}
                                     dot={false}
                                     isAnimationActive={false}
+                                    connectNulls={false}
                                   />
                                 </LineChart>
                               </ResponsiveContainer>
@@ -655,7 +847,7 @@ export default function DashboardPage() {
                         </div>
                       ) : (
                         <div className="h-[120px] flex items-center justify-center text-[#B4B7BD] text-sm">
-                          Data SWR belum dapat dihitung dari sumber saat ini
+                          Data Return Loss belum dapat dihitung dari sumber saat ini
                         </div>
                       )}
                     </div>
@@ -675,58 +867,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
-function DeviceDropdown({ selected, onSelect }: { selected: DeviceName, onSelect: (val: DeviceName) => void }) {
-  const [open, setOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  const devices: DeviceName[] = ['SDR 1', 'SDR 2'];
-
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setOpen(false);
-      }
-    }
-    if (open) {
-      document.addEventListener('mousedown', handleClickOutside);
-    } else {
-      document.removeEventListener('mousedown', handleClickOutside);
-    }
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [open]);
-
-  return (
-    <div className="relative mt-1 w-full max-w-xs" ref={dropdownRef}>
-      <button
-        className={`w-full text-left bg-[#181b28] border ${open ? 'border-[#3b82f6]' : 'border-[#3B4253]'} focus:border-[#3b82f6] text-white font-semibold text-base py-2 pl-5 pr-4 rounded-lg flex items-center justify-between transition-colors duration-150 outline-none`}
-        onClick={() => setOpen((prev) => !prev)}
-        type="button"
-        tabIndex={0}
-      >
-        {selected || 'Select Device'}
-        <svg className="ml-2 w-4 h-4 text-[#B4B7BD]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-        </svg>
-      </button>
-      {open && (
-        <div className="absolute left-0 mt-2 w-full bg-[#181b28] border border-[#3B4253] rounded-lg z-10">
-          {devices.map((device) => (
-            <button
-              key={device}
-              className={`block w-full text-left px-5 py-2 text-white font-normal text-base hover:bg-[#3b82f6]/30 focus:bg-[#3b82f6]/30 transition-colors duration-100 ${selected === device ? 'font-semibold' : ''}`}
-              onClick={() => {
-                onSelect(device);
-                setOpen(false);
-              }}
-              type="button"
-            >
-              {device}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-} 
